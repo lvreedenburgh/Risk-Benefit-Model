@@ -7,6 +7,8 @@ consumers-own [
   network ; list of consumers in network
   network_size ; size of network
   consumer_leader? ; Boolean if leader or not
+  max-network-size ; maximum number of connected agents
+  connected-agents ; set of connected agents
 
   ; how important is external factor to consumer
   weight_knowledge_development
@@ -23,6 +25,8 @@ farmers-own [
   network ; list of consumers in network
   network_size ; size of network
   farmer_leader? ; Boolean if leader or not
+  max-network-size ; maximum number of connected agents
+  connected-agents ; set of connected agents
 
   ; how important is external factor to farmer
   weight_knowledge_development
@@ -32,7 +36,7 @@ farmers-own [
   weight_rainfall
   weight_GDP
 
-  risk
+  risk ; on what scale? 1 to 7? 0 to 1? 1 to 100?
   benefit
 ]
 
@@ -51,6 +55,15 @@ globals[
   alarmed_farmers ; amount
   conflicted_farmers ; amount
 
+  ; how do we do the thresholds? benefits are the same for conflicted and optimistic so
+  ; we should make a pair. Something with an AND operation? Not sure how to do it with the
+  ; variables.
+  threshold_cluster_optimistic ;
+  threshold_cluster_neutral ;
+  threshold_cluster_alamred
+  threshold_cluster_conflicted ;
+
+
 ]
 
 to setup
@@ -64,7 +77,15 @@ end
 
 to setupconsumers
   set consumers_total 16
-  create-consumers consumers_total [set color red set shape "person" set size 7]
+  create-consumers consumers_total [
+    set color red
+    set shape "person"
+    set size 7
+    ifelse random 100 > 50 ; random percentage: can also be specific number of leaders etc
+      [set consumer_leader? true set color blue]
+      [set consumer_leader? false]
+    set weight_knowledge_development random 2 ; how much are these weights going to be?
+  ]
 
 
   ask consumers [set clustered 0]
@@ -81,6 +102,8 @@ to setupconsumers
 
   ask consumers [setxy risk benefit]
 
+  ; somewhere here to create links between consumers (and farmers)
+
 end
 
 
@@ -94,10 +117,54 @@ end
 
 to go
 
+  consumers-risk-benefit
+
+  tick
 end
 
+to consumers-risk-benefit
 
+  con-leaders-pick
+;  setup-external-factors
+  con-pick
 
+end
+
+to con-leaders-pick
+
+  ask consumers with [consumer_leader? = true]
+  [
+    change-R-and-B
+    ; pick a random (?) number of agents from your network
+  ]
+
+end
+
+to con-pick
+  ask consumers with [consumer_leader? = false]
+  [
+    change-R-and-B
+    ; pick an agent to talk to that has not reached the max-network-size yet
+  ]
+
+end
+
+to change-R-and-B ; change the risk and benefit for the consumer or farmer
+  set risk (risk + knowledge_development * weight_knowledge_development)
+  set benefit (benefit + knowledge_development * weight_knowledge_development)
+  ; we did not decide on how the external factors would influence the agents so I made up this formula
+end
+
+;; Already done in interface, maybe also nice procedure for testing?
+;to change-external-factors ; dependent on the scenario taking place, for now it is randomized
+;  set knowledge_development random 100
+;  set trust_government random 100
+;  set regulations random 100
+;  set water_demand random 100
+;  set rainfall random 100
+;  set GDP random 100
+;  set trust_in_agriculture random 100
+;end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -589,7 +656,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
