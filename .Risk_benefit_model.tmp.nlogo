@@ -101,7 +101,7 @@ to setupnetwork
   let new_network_member nobody
   repeat 4 [
     ask n-of 3 other consumers with [ cluster = [cluster] of myself and network_size < max_network_size][
-      create-link-with myself
+      create-link-with myself  network set [network] of myself lput [self]
     ]
   ]
 
