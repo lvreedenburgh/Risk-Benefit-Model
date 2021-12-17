@@ -59,7 +59,7 @@ globals[
 to setup
   clear-all
   reset-ticks
-  set max_network_size 7
+  set max_network_size 6
   set cluster_list ["optimistic" "neutral" "alarmed" "conflicted"]
 
   setupconsumers
@@ -98,20 +98,52 @@ to setupconsumers
 end
 
 to setupnetwork
+  ; TO DO: Let consumer check if their own network size is < max_network_size and if they already have enough consumers from the selected cluster
+
+
+  ; temporary value of consumer to add to network
   let new_network_member nobody
-  repeat 4 [
-    ask n-of 3 other consumers with [ cluster = [cluster] of myself and network_size < max_network_size][
-      create-link-with myself  network set [network] of myself lput [self]
+
+  repeat 3 [
+    ; set the temporary consumer to selected consumer
+    set new_network_member one-of other consumers with [ cluster = [cluster] of myself and network_size < max_network_size and member? myself network = false]
+    ; check if not nobody selected
+    if new_network_member != nobody [
+      ask new_network_member [
+        ; ask selected consumer to create a link with myself
+        create-link-with myself
+        ; ask selected consumer to add myself to their network list
+        set network lput myself network
+        ; ask selected consumer to increase their network size by 1
+        set network_size network_size + 1
+      ]
+    ; add the new_network_member to my network list
+    set network lput new_network_member network
+    ; increase my network size by 1
+    set network_size network_size + 1
     ]
   ]
 
+  ; get one consumer from the three other clusters
   foreach cluster_list [x -> if x != [cluster] of self [
-    ask one-of consumers with [ cluster = x and network_size < max_network_size][
-      create-link-with myself
+    set new_network_member one-of consumers with [ cluster = x and network_size < max_network_size and member? myself network = false]
+    if new_network_member != nobody [
+      ask new_network_member [
+        ; ask selected consumer to create a link with myself
+        create-link-with myself
+        ; ask selected consumer to add myself to their network list
+        set network lput myself network
+        ; ask selected consumer to increase their network size by 1
+        set network_size network_size + 1
+      ]
+    ; add the new_network_member to my network list
+    set network lput new_network_member network
+    ; increase my network size by 1
+    set network_size network_size + 1
     ]
    ]
   ]
-
+print network_size
 end
 
 to setupfarmers
@@ -124,7 +156,6 @@ end
 to go
 
 end
-
 
 @#$#@#$#@
 GRAPHICS-WINDOW
