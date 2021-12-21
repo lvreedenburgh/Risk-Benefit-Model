@@ -127,10 +127,18 @@ to assigntoclusters
   ask n-of (0.25 * No_farmers) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
   ask n-of (0.25 * No_farmers) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
 
-  ask agentset with [cluster = "optimistic"] [set risk random-normal 24.3 7.1 set benefit random-normal 57.7 6.5]
-  ask agentset with [cluster = "neutral"] [set risk random-normal 36.1 6.5 set benefit random-normal 39.1 7.0]
-  ask agentset with [cluster = "alarmed"] [set risk random-normal 55.2 7.8 set benefit random-normal 26.5 8.8]
-  ask agentset with [cluster = "conflicted"] [set risk random-normal 46.3 7.1 set benefit random-normal 48.8 6.8]
+  ask agentset with [cluster = "optimistic"] [set risk random-normal 24.3 7.1 set benefit random-normal 57.7 6.5] ; 28% of the farmers = 60% no risk, 46% yes advantage
+  ask agentset with [cluster = "neutral"] [set risk random-normal 36.1 6.5 set benefit random-normal 39.1 7.0] ; 64.8% of the farmers (left over)
+  ask agentset with [cluster = "alarmed"] [set risk random-normal 55.2 7.8 set benefit random-normal 26.5 8.8] ; 2.2% of the farmers = 11% risky, 20% no advantage
+  ask agentset with [cluster = "conflicted"] [set risk random-normal 46.3 7.1 set benefit random-normal 48.8 6.8] ; 5% of the farmers = 11% risky, 46 yes advantage
+
+  ; Next to the cluster, we should also assign weights to the external factors.
+  ; For the weight knowledge development, I'd relate that to the amount of perceived risk. When they do not have education, they perceive more risks (next line)
+  ; Weight knowledge development: 5.5% has high, 5.6% low and the rest can be in the middle.
+  ; In the paper I research mostly the water demand and knowledge development were covered so for water demand: 55% think the conditions for availability won't change.
+  ; Weight water demand will be low for 55% of them and maybe higher for 5.6% and the rest can stay in the middle.
+  ; We want the middle ground to make sure that the external factor does not influence the opinion too much, so that should be around 1. The lower can be close to 0 and the higher can be close to 2.
+  ; The external factors themselves need to have a value above 1 and maybe below 2, to not overcomplicate things.
 
   ask agentset [setxy risk benefit]
 end
