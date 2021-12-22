@@ -7,6 +7,11 @@ turtles-own [
   leader?
   in_conversation?
   influence
+  optimistic_%
+  neutral_%
+  alarmed_%
+  conflicted_%
+  leader_in_network?
 ]
 consumers-own [
   cluster ; in which cluster is consumer
@@ -82,6 +87,11 @@ to setupconsumers
     set size 3
     set network []
     set influence 1
+    set optimistic_% 0.252
+    set neutral_% 0.396
+    set alarmed_% 0.118
+    set conflicted_% 0.234
+
   ]
 
   set agentset consumers
@@ -90,12 +100,16 @@ to setupconsumers
   ask consumers [set leader? false]
   ask n-of (consumer_leaders * No_consumers) consumers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
 
-  set agentset consumers with [leader? = false]
-  ask agentset [setupnetworks]
+  ask agentset [
+    if leader? = true [
+      setupnetworks_leaders
+    ]
+  ]
 
-  set agentset farmers with [leader? = true]
-  ;ask agentset [setupnetworks]
-
+  ask agentset [if leader? = false [
+    setupnetworks_rest
+    ]
+  ]
 end
 
 to setupfarmers
@@ -106,6 +120,10 @@ to setupfarmers
     set size 3
     set network []
     set influence 1
+    set optimistic_% 0.28
+    set neutral_% 0.648
+    set alarmed_% 0.022
+    set conflicted_% 0.05
   ]
 
   set agentset farmers
@@ -114,11 +132,16 @@ to setupfarmers
   ask farmers [set leader? false]
   ask n-of (farmer_leaders * No_farmers) farmers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
 
-  set agentset farmers with [leader? = false]
-  ask agentset [setupnetworks]
+  ask agentset [
+    if leader? = true [
+      setupnetworks_leaders
+    ]
+  ]
 
-  set agentset farmers with [leader? = true]
-  ;ask agentset [setupnetworks]
+  ask agentset [if leader? = false [
+    setupnetworks_rest
+    ]
+  ]
 
 end
 
@@ -126,10 +149,10 @@ to assigntoclusters
 
   ask agentset [set clustered? 0]
 
-  ask n-of (0.25 * No_farmers) agentset with [clustered? = 0] [ set cluster "optimistic" set clustered? 1]
-  ask n-of (0.25 * No_farmers) agentset with [clustered? = 0] [ set cluster "neutral" set clustered? 1]
-  ask n-of (0.25 * No_farmers) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
-  ask n-of (0.25 * No_farmers) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
+  ask n-of (optimistic_% * count agentset) agentset with [clustered? = 0] [ set cluster "optimistic" set clustered? 1]
+  ask n-of (neutral_% * count agentset) agentset with [clustered? = 0] [ set cluster "neutral" set clustered? 1]
+  ask n-of (alarmed_% * count agentset) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
+  ask n-of (conflicted_% * count agentset) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
 
   ask agentset with [cluster = "optimistic"] [set risk random-normal 24.3 7.1 set benefit random-normal 57.7 6.5] ; 28% of the farmers = 60% no risk, 46% yes advantage
   ask agentset with [cluster = "neutral"] [set risk random-normal 36.1 6.5 set benefit random-normal 39.1 7.0] ; 64.8% of the farmers (left over)
@@ -147,51 +170,83 @@ to assigntoclusters
   ask agentset [setxy risk benefit]
 end
 
-to setupnetworks
-    ; temporary value of agent to add to network
-  let new_network_member nobody
+to setupnetworks_leaders
 
-  repeat 3 [
-    ; set the temporary agent to selected agent
+  let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot take leaders to their network
 
-    set new_network_member one-of other agentset with [ cluster = [cluster] of myself and network_size < max_network_size and member? myself network = false]
-    ; check if not nobody selected
-    if new_network_member != nobody [
-      ask new_network_member [
-        ; ask selected consumer to create a link with myself
+  while [network_size < Leader_network_size and potential_members != nobody] ;by that we ensure that each leader will ends up with the maximum network and thus cannot be taken in the network of normal agent in the next phase
+  [
+    let potential_members_same_cluster potential_members with [leader? = false and network_size < max_network_size and cluster = [cluster] of self]
+    let potential_members_different_cluster potential_members with [leader? = false and network_size < max_network_size and cluster != [cluster] of self]
+    let new_member_same_cluster one-of other potential_members_same_cluster
+    let new_member_different_cluster one-of other potential_members_different_cluster
+    ;first we take an agent leader's cluster
+    if new_member_same_cluster != nobody [
+      ask new_member_same_cluster [
         create-link-with myself
-        ; ask selected consumer to add myself to their network list
         set network lput myself network
-        ; ask selected consumer to increase their network size by 1
         set network_size network_size + 1
+        set leader_in_network? true
       ]
-    ; add the new_network_member to my network list
-    set network lput new_network_member network
-    ; increase my network size by 1
-    set network_size network_size + 1
+      set network lput new_member_same_cluster network
+      set network_size network_size + 1
     ]
+    ;next step is to take an agent from one of teh different clusters. It is omitted if the network size is achieved in previous phase
+    if new_member_different_cluster != nobody and network_size < Leader_network_size [
+      ask new_member_different_cluster [
+        create-link-with myself
+        set network lput myself network
+        set network_size network_size + 1
+        set leader_in_network? true
+      ]
+      set network lput new_member_different_cluster network
+      set network_size network_size + 1
+    ]
+    set potential_members other potential_members with [leader? = false and network_size < max_network_size]
   ]
 
-  ; get one consumer from the three other clusters
-  foreach cluster_list [x -> if x != [cluster] of self [
-    set new_network_member one-of agentset with [ cluster = x and network_size < max_network_size and member? myself network = false]
-    if new_network_member != nobody [
-      ask new_network_member [
-        ; ask selected consumer to create a link with myself
+
+  if debug? [print network_size]
+
+end
+
+to setupnetworks_rest
+
+  let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot be taken a sthey already created full networks
+
+  while [network_size < max_network_size and any? potential_members]
+    [
+    let potential_members_same_cluster potential_members with [cluster = [cluster] of self]
+    let potential_members_different_cluster potential_members with [cluster != [cluster] of self]
+    let new_member_same_cluster one-of other potential_members_same_cluster
+    let new_member_different_cluster one-of other potential_members_different_cluster
+    ;first we take an agent leader's cluster
+    if new_member_same_cluster != nobody [
+      ask new_member_same_cluster [
         create-link-with myself
-        ; ask selected consumer to add myself to their network list
         set network lput myself network
-        ; ask selected consumer to increase their network size by 1
         set network_size network_size + 1
+        set leader_in_network? true
       ]
-    ; add the new_network_member to my network list
-    set network lput new_network_member network
-    ; increase my network size by 1
-    set network_size network_size + 1
+      set network lput new_member_same_cluster network
+      set network_size network_size + 1
     ]
-   ]
+    ;next step is to take an agent from one of teh different clusters. It is omitted if the network size is achieved in previous phase
+    if new_member_different_cluster != nobody and network_size < max_network_size [
+      ask new_member_different_cluster [
+        create-link-with myself
+        set network lput myself network
+        set network_size network_size + 1
+        set leader_in_network? true
+      ]
+      set network lput new_member_different_cluster network
+      set network_size network_size + 1
+    ]
+    set potential_members other potential_members with [leader? = false and network_size < max_network_size]
+      print potential_members
   ]
   if debug? [print network_size]
+
 end
 
 to go
@@ -478,7 +533,7 @@ CHOOSER
 rainfall
 rainfall
 1 2 3
-0
+2
 
 CHOOSER
 30
@@ -498,7 +553,7 @@ CHOOSER
 trust_government
 trust_government
 1 2 3
-0
+2
 
 CHOOSER
 30
@@ -508,7 +563,7 @@ CHOOSER
 regulations
 regulations
 1 2 3
-0
+2
 
 CHOOSER
 30
@@ -518,7 +573,7 @@ CHOOSER
 knowledge_development
 knowledge_development
 1 2 3
-0
+2
 
 CHOOSER
 30
@@ -589,8 +644,8 @@ SLIDER
 consumer_leaders
 consumer_leaders
 0
-0.5
-0.3
+0.25
+0.25
 0.01
 1
 NIL
@@ -604,8 +659,8 @@ SLIDER
 farmer_leaders
 farmer_leaders
 0
-0.5
-0.3
+0.25
+0.25
 0.01
 1
 NIL
@@ -635,7 +690,7 @@ No_consumers
 No_consumers
 4
 100
-12.0
+100.0
 4
 1
 NIL
@@ -650,7 +705,7 @@ No_farmers
 No_farmers
 4
 20
-4.0
+20.0
 4
 1
 NIL
@@ -666,6 +721,21 @@ debug?
 0
 1
 -1000
+
+SLIDER
+328
+239
+500
+272
+Leader_network_size
+Leader_network_size
+6
+12
+12.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1009,7 +1079,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
