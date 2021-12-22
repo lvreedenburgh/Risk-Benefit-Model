@@ -358,6 +358,8 @@ to conversation [person1 person2]
       print "new benefit person1"
       print benefit
     ]
+
+   changecluster
    setxy risk benefit]
 
   if debug? [
@@ -394,7 +396,30 @@ to conversation [person1 person2]
       print benefit
     ]
 
+   changecluster
    setxy risk benefit]
+end
+
+to changecluster
+  if debug? [
+    print "my old cluster is"
+    print cluster
+  ]
+
+  ifelse risk < 35 and benefit > 45
+    [set cluster "optimistic"]
+    [ifelse risk < 45 and benefit < 45
+      [set cluster "disengaged"]
+      [ifelse risk > 45 and benefit < 35
+        [set cluster "alarmed"]
+        [set cluster "conflicted"]
+      ]
+    ]
+
+  if debug? [
+    print "my new cluster is"
+    print cluster
+  ]
 end
 
 ;; Already done in interface, maybe also nice procedure for testing?
@@ -610,7 +635,7 @@ No_consumers
 No_consumers
 4
 100
-32.0
+12.0
 4
 1
 NIL
@@ -638,7 +663,7 @@ SWITCH
 445
 debug?
 debug?
-1
+0
 1
 -1000
 
