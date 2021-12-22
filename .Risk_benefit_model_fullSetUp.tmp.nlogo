@@ -248,6 +248,11 @@ to con-leaders-pick
 
   ]
 
+
+
+
+
+
 end
 
 to con-pick
@@ -278,7 +283,6 @@ to con-pick
       ]
     ]
 
-    ; the last consumers that get to pick often return nobody, because the consumers from the cluster they picked are already taken
     print conversation_partner
 
     set in_conversation? true
