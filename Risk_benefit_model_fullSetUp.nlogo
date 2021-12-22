@@ -191,7 +191,7 @@ to setupnetworks
     ]
    ]
   ]
-print network_size
+  if debug? [print network_size]
 end
 
 to go
@@ -221,11 +221,13 @@ to con-leaders-pick
     let chance random 6
     let temp_cluster_list remove [cluster] of self cluster_list
 
-    print "I am a leader!"
-    print self
-    print chance
-    print [cluster] of self
-    print temp_cluster_list
+    if debug? [
+      print "I am a leader!"
+      print self
+      print chance
+      print [cluster] of self
+      print temp_cluster_list
+    ]
 
 
     ; if chance is 0, 1 or 2, pick consumer from own cluster
@@ -242,7 +244,7 @@ to con-leaders-pick
       ]
     ]
 
-    print conversation_partner
+    if debug? [print conversation_partner]
 
     set in_conversation? true
     if conversation_partner != nobody [
@@ -263,10 +265,12 @@ to con-pick
     let temp_cluster_list remove [cluster] of self cluster_list
 
 
-    print chance
-    print [cluster] of self
-    print temp_cluster_list
-    print self
+    if debug? [
+      print chance
+      print [cluster] of self
+      print temp_cluster_list
+      print self
+    ]
 
     ; if chance is 0, 1 or 3, pick consumer from own cluster
     ifelse chance < 3
@@ -283,7 +287,7 @@ to con-pick
     ]
 
     ; the last consumers that get to pick often return nobody, because the consumers from the cluster they picked are already taken
-    print conversation_partner
+    if debug? [print conversation_partner]
 
     set in_conversation? true
     if conversation_partner != nobody [
@@ -305,78 +309,90 @@ end
 
 to conversation [person1 person2]
   ; calculate
-  print "person1"
-  print person1
-  print "risk of person1"
-  print [risk] of person1
+  if debug? [
+    print "person1"
+    print person1
+    print "risk of person1"
+    print [risk] of person1
+  ]
 
   let new_risk 0
   let new_benefit 0
 
   let risk_change ((([risk] of person1 * [influence] of person1) - ([risk] of person2 * [influence] of person1)) / 2)
-  print "risk change"
-  print risk_change
+  if debug? [
+    print "risk change"
+    print risk_change
+  ]
   let benefit_change ((([benefit] of person1 * [influence] of person1) - ([benefit] of person2 * [influence] of person1)) / 2)
-  print "benefit change"
-  print benefit_change
+  if debug? [
+    print "benefit change"
+    print benefit_change
+  ]
 
   ask person1 [
    set new_risk ([risk] of person1 - risk_change)
-   ifelse new_risk < 0
-    [set risk 0]
+   ifelse 0 < new_risk and new_risk < 70
+    [set risk new_risk]
     [ifelse new_risk > 70
       [set risk 70]
-      [set risk new_risk]
+      [set risk 0]
     ]
-
-   print "new risk person1"
-   print risk
-   print "benefit of person1"
-   print [benefit] of person1
+   if debug? [
+      print "new risk person1"
+      print risk
+      print "benefit of person1"
+      print [benefit] of person1
+    ]
 
 
 
    set new_benefit ([benefit] of person1 - benefit_change)
-   ifelse new_benefit < 0
-    [set benefit 0]
+   ifelse 0 < new_benefit and new_benefit < 70
+    [set benefit new_benefit]
     [ifelse new_benefit > 70
       [set benefit 70]
-      [set benefit new_benefit]
+      [set benefit 0]
     ]
-
-   print "new benefit person1"
-   print benefit
+   if debug? [
+      print "new benefit person1"
+      print benefit
+    ]
    setxy risk benefit]
 
-  print "person2"
-  print person2
-  print "risk of person2"
-  print [risk] of person2
+  if debug? [
+    print "person2"
+    print person2
+    print "risk of person2"
+    print [risk] of person2
+  ]
 
   ask person2 [
    set new_risk ([risk] of person2 + risk_change)
-   ifelse new_risk < 0
-    [set risk 0]
+   ifelse 0 < new_risk and new_risk < 70
+    [set risk new_risk]
     [ifelse new_risk > 70
       [set risk 70]
-      [set risk new_risk]
+      [set risk 0]
     ]
-
-   print "new risk person2"
-   print risk
-   print "benefit of person2"
-   print [benefit] of person2
+   if debug? [
+      print "new risk person2"
+      print risk
+      print "benefit of person2"
+      print [benefit] of person2
+    ]
 
    set new_benefit ([benefit] of person2 + benefit_change)
-   ifelse new_benefit < 0
-    [set benefit 0]
+   ifelse 0 < new_benefit and new_benefit < 70
+    [set benefit new_benefit]
     [ifelse new_benefit > 70
       [set benefit 70]
-      [set benefit new_benefit]
+      [set benefit 0]
     ]
-
-   print "new benefit person2"
-   print benefit
+   if debug? [
+      print "new benefit person2"
+      print benefit
+    ]
 
    setxy risk benefit]
 end
@@ -614,6 +630,17 @@ No_farmers
 1
 NIL
 HORIZONTAL
+
+SWITCH
+347
+412
+450
+445
+debug?
+debug?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
