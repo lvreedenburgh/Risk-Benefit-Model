@@ -6,6 +6,7 @@ turtles-own [
   in_network?
   leader?
   in_conversation?
+  influence
 ]
 consumers-own [
   cluster ; in which cluster is consumer
@@ -80,13 +81,14 @@ to setupconsumers
     set shape "person"
     set size 3
     set network []
+    set influence 1
   ]
 
   set agentset consumers
   ask consumers [assigntoclusters]
 
   ask consumers [set leader? false]
-  ask n-of (consumer_leaders * No_consumers) consumers with [leader? = false] [set leader? true set size 5]
+  ask n-of (consumer_leaders * No_consumers) consumers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
 
   set agentset consumers with [leader? = false]
   ask agentset [setupnetworks]
@@ -103,13 +105,14 @@ to setupfarmers
     set shape "person"
     set size 3
     set network []
+    set influence 1
   ]
 
   set agentset farmers
   ask farmers [assigntoclusters]
 
   ask farmers [set leader? false]
-  ask n-of (farmer_leaders * No_farmers) farmers with [leader? = false] [set leader? true set size 5]
+  ask n-of (farmer_leaders * No_farmers) farmers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
 
   set agentset farmers with [leader? = false]
   ask agentset [setupnetworks]
@@ -244,14 +247,10 @@ to con-leaders-pick
     set in_conversation? true
     if conversation_partner != nobody [
       ask conversation_partner [set in_conversation? true]
+      conversation self conversation_partner
     ]
 
   ]
-
-
-
-
-
 
 end
 
@@ -283,12 +282,15 @@ to con-pick
       ]
     ]
 
+    ; the last consumers that get to pick often return nobody, because the consumers from the cluster they picked are already taken
     print conversation_partner
 
     set in_conversation? true
     if conversation_partner != nobody [
       ask conversation_partner [set in_conversation? true]
+      conversation self conversation_partner
     ]
+
   ]
 
 end
@@ -299,6 +301,85 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
   set risk (risk + knowledge_development * weight_knowledge_development)
   set benefit (benefit + knowledge_development * weight_knowledge_development)
   ; we did not decide on how the external factors would influence the agents so I made up this formula
+end
+
+to conversation [person1 person2]
+  ; calculate
+  print "person1"
+  print person1
+  print "risk of person1"
+  print [risk] of person1
+
+  let new_risk 0
+  let new_benefit 0
+
+  let risk_change ((([risk] of person1 * [influence] of person1) - ([risk] of person2 * [influence] of person1)) / 2)
+  print "risk change"
+  print risk_change
+  let benefit_change ((([benefit] of person1 * [influence] of person1) - ([benefit] of person2 * [influence] of person1)) / 2)
+  print "benefit change"
+  print benefit_change
+
+  ask person1 [
+
+   set new_risk ([risk] of person1 - risk_change)
+   ifelse new_risk < 0
+    [set risk 0]
+    [ifelse new_risk > 70
+      [set risk 70]
+      [set risk new_risk]
+    ]
+
+   print "new risk person1"
+   print risk
+   print "benefit of person1"
+   print [benefit] of person1
+
+
+
+   set new_benefit ([benefit] of person1 - benefit_change)
+   ifelse new_benefit < 0
+    [set benefit 0]
+    [ifelse new_benefit > 70
+      [set benefit 70]
+      [set benefit new_benefit]
+    ]
+
+   print "new benefit person1"
+   print benefit
+   setxy risk benefit]
+
+  print "person2"
+  print person2
+  print "risk of person2"
+  print [risk] of person2
+
+  ask person2 [
+   set new_risk ([risk] of person2 + risk_change)
+   ifelse new_risk < 0
+    [set risk 0]
+    [ifelse new_risk > 70
+      [set risk 70]
+      [set risk new_risk]
+    ]
+
+   print "new risk person2"
+   print risk
+   print "benefit of person2"
+   print [benefit] of person2
+
+   set new_benefit ([benefit] of person2 + benefit_change)
+   ifelse new_benefit < 0
+    [set benefit 0]
+    [ifelse new_benefit > 70
+      [set benefit 70]
+      [set benefit new_benefit]
+    ]
+
+   print "new benefit person2"
+   print benefit
+
+   setxy risk benefit]
 end
 
 ;; Already done in interface, maybe also nice procedure for testing?
@@ -315,8 +396,8 @@ end
 GRAPHICS-WINDOW
 647
 10
-1292
-656
+1362
+726
 -1
 -1
 7.0
@@ -330,9 +411,9 @@ GRAPHICS-WINDOW
 0
 1
 -10
-80
+90
 -10
-80
+90
 0
 0
 1
