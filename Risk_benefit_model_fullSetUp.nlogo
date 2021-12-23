@@ -7,23 +7,36 @@ turtles-own [
   leader?
   in_conversation?
   influence
+
   optimistic_%
   neutral_%
   alarmed_%
   conflicted_%
+
+  ; calculate the weight the agent gives to external factor
+  weight_knowledge_development
+  weight_trust_government
+  weight_trust_agriculture ; consumers only
+  weight_regulations
+  weight_water_demand ; farmers only
+  weight_rainfall ; farmers only
+  weight_GDP ; farmers only
+
+  ; assign high, medium, low priority for agent on this external factor
+  himedlow_knowledge_development
+  himedlow_trust_government
+  himedlow_trust_agriculture ; consumers only
+  himedlow_regulations
+  himedlow_water_demand ; farmers only
+  himedlow_rainfall ; farmers only
+  himedlow_GDP ; farmers only
+
   leader_in_network?
 ]
 consumers-own [
   cluster ; in which cluster is consumer
   network ; list of consumers in network
   network_size ; size of network
-
-
-  ; how important is external factor to consumer
-  weight_knowledge_development
-  weight_trust_government
-  weight_trust_agriculture
-  weight_regulations
 
   risk
   benefit
@@ -33,15 +46,6 @@ farmers-own [
   cluster ; in which cluster is farmer
   network ; list of farmers in network
   network_size ; size of network
-
-
-  ; how important is external factor to farmer
-  weight_knowledge_development
-  weight_trust_government
-  weight_regulations
-  weight_water_demand
-  weight_rainfall
-  weight_GDP
 
   risk
   benefit
@@ -124,10 +128,13 @@ to setupfarmers
     set neutral_% 0.648
     set alarmed_% 0.022
     set conflicted_% 0.05
+    assign-weights
   ]
 
   set agentset farmers
-  ask farmers [assigntoclusters]
+  ask farmers [
+    assigntoclusters
+  ]
 
   ask farmers [set leader? false]
   ask n-of (farmer_leaders * No_farmers) farmers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
@@ -154,21 +161,47 @@ to assigntoclusters
   ask n-of (alarmed_% * count agentset) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
   ask n-of (conflicted_% * count agentset) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
 
-  ask agentset with [cluster = "optimistic"] [set risk random-normal 24.3 7.1 set benefit random-normal 57.7 6.5] ; 28% of the farmers = 60% no risk, 46% yes advantage
-  ask agentset with [cluster = "neutral"] [set risk random-normal 36.1 6.5 set benefit random-normal 39.1 7.0] ; 64.8% of the farmers (left over)
-  ask agentset with [cluster = "alarmed"] [set risk random-normal 55.2 7.8 set benefit random-normal 26.5 8.8] ; 2.2% of the farmers = 11% risky, 20% no advantage
-  ask agentset with [cluster = "conflicted"] [set risk random-normal 46.3 7.1 set benefit random-normal 48.8 6.8] ; 5% of the farmers = 11% risky, 46 yes advantage
-
-  ; Next to the cluster, we should also assign weights to the external factors.
-  ; For the weight knowledge development, I'd relate that to the amount of perceived risk. When they do not have education, they perceive more risks (next line)
-  ; Weight knowledge development: 5.5% has high, 5.6% low and the rest can be in the middle.
-  ; In the paper I research mostly the water demand and knowledge development were covered so for water demand: 55% think the conditions for availability won't change.
-  ; Weight water demand will be low for 55% of them and maybe higher for 5.6% and the rest can stay in the middle.
-  ; We want the middle ground to make sure that the external factor does not influence the opinion too much, so that should be around 1. The lower can be close to 0 and the higher can be close to 2.
-  ; The external factors themselves need to have a value above 1 and maybe below 2, to not overcomplicate things.
+  ask agentset with [cluster = "optimistic"] [set risk random-normal 24.3 7.1 set benefit random-normal 57.7 6.5]
+  ask agentset with [cluster = "neutral"] [set risk random-normal 36.1 6.5 set benefit random-normal 39.1 7.0]
+  ask agentset with [cluster = "alarmed"] [set risk random-normal 55.2 7.8 set benefit random-normal 26.5 8.8]
+  ask agentset with [cluster = "conflicted"] [set risk random-normal 46.3 7.1 set benefit random-normal 48.8 6.8]
 
   ask agentset [setxy risk benefit]
 end
+
+to assign-weights
+  ; low = (0> x >1) * external factor
+  ; medium = 1/external factor
+  ; high = (1> x >=2) * external factor
+
+  ; first assign hi-med-low-external-factor
+
+  let highrandom (random-float 100 )
+
+  ifelse highrandom < 5.5 [
+    set himedlow_knowledge_development (1 + random-float 1)
+    ]
+    [ifelse random-float 100 < 5.6 [
+      set himedlow_knowledge_development (random-float 1)
+    ]
+      [set himedlow_knowledge_development 0]]
+
+  ifelse highrandom < 5.6 [
+   set himedlow_water_demand (1 + random-float 1)
+  ]
+  [ ifelse random-float 100 < 55 [
+    set himedlow_water_demand (random-float 1)
+    ]
+    [ set himedlow_water_demand 0
+  ]]
+
+  ; calculate the weight
+  set weight_knowledge_development (himedlow_knowledge_development * knowledge_development)
+  set weight_water_demand (himedlow_water_demand * water_demand)
+
+
+end
+
 
 to setupnetworks_leaders
 
@@ -253,17 +286,25 @@ to go
 
   ask turtles [set in_conversation? false]
   consumers-risk-benefit
+  farmers-risk-benefit
 
   tick
 end
 
 to consumers-risk-benefit
   ; Let all consumers change their r and b based on external factors before they start communicating with eachother
-  ask consumers [change-R-and-B]
+  ask consumers [change-R-and-B] ; do first the leaders need to update this? It includes external factors & changing r and b
 
   con-leaders-pick
 ;  setup-external-factors
   con-pick
+
+end
+
+to farmers-risk-benefit
+  ask farmers [change-R-and-B] ; do first the leaders need to update this?
+
+
 
 end
 
@@ -357,9 +398,18 @@ end
 
 
 to change-R-and-B ; change the risk and benefit for the consumer or farmer
-  set risk (risk + knowledge_development * weight_knowledge_development)
-  set benefit (benefit + knowledge_development * weight_knowledge_development)
-  ; we did not decide on how the external factors would influence the agents so I made up this formula
+  ifelse himedlow_knowledge_development > 1
+  [set risk (risk + weight_knowledge_development * knowledge_development)
+   set benefit (benefit - weight_knowledge_development * knowledge_development)
+  ]
+  [set risk (risk - weight_knowledge_development * knowledge_development)
+   set benefit (benefit + weight_knowledge_development * knowledge_development)
+  ]
+
+  ifelse himedlow_water_demand > 1
+  [set benefit (benefit - weight_water_demand * water_demand)]
+  [ set risk (risk - weight_water_demand * water_demand)]
+
 end
 
 to conversation [person1 person2]
