@@ -72,6 +72,7 @@ globals[
 ]
 
 to setup
+  ; TO DO divide a world into clusters and colored differently
   clear-all
   reset-ticks
 
@@ -124,7 +125,7 @@ to setupfarmers
     set size 3
     set network []
     set influence 1
-    set optimistic_% 0.28
+    set optimistic_% 0.28; not a turtle-own!
     set neutral_% 0.648
     set alarmed_% 0.022
     set conflicted_% 0.05
@@ -153,6 +154,7 @@ to setupfarmers
 end
 
 to assigntoclusters
+  ;To DO: try to avoid setting percentage as a turtle-own variable
 
   ask agentset [set clustered? 0]
 
@@ -179,7 +181,7 @@ to assign-weights
   let highrandom (random-float 100 )
 
   ifelse highrandom < 5.5 [
-    set himedlow_knowledge_development (1 + random-float 1)
+    set himedlow_knowledge_development (1 + random-float 1); change numbers: knowledge developmnet as a lack of information
     ]
     [ifelse random-float 100 > 94.4 [
       set himedlow_knowledge_development (random-float 1)
@@ -226,8 +228,8 @@ to setupnetworks_leaders
 
   let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot take leaders to their network
 
-  while [network_size < Leader_network_size and potential_members != nobody] ;by that we ensure that each leader will ends up with the maximum network and thus cannot be taken in the network of normal agent in the next phase
-  [
+  while [network_size < Leader_network_size and any? potential_members] ;by that we ensure that each leader will ends up with the maximum network and thus cannot be taken in the network of normal agent in the next phase
+  [ print network_size
     let potential_members_same_cluster potential_members with [leader? = false and network_size < max_network_size and cluster = [cluster] of self]
     let potential_members_different_cluster potential_members with [leader? = false and network_size < max_network_size and cluster != [cluster] of self]
     let new_member_same_cluster one-of other potential_members_same_cluster
@@ -441,6 +443,7 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 end
 
 to conversation [person1 person2]
+; TO DO: set influecne as a function of distance
   ; calculate
   if debug? [
     print "person1"
@@ -554,6 +557,8 @@ to changecluster
     print cluster
   ]
 end
+
+
 
 ;; Already done in interface, maybe also nice procedure for testing?
 ;to change-external-factors ; dependent on the scenario taking place, for now it is randomized
@@ -796,7 +801,7 @@ SWITCH
 445
 debug?
 debug?
-0
+1
 1
 -1000
 
@@ -809,7 +814,7 @@ Leader_network_size
 Leader_network_size
 6
 12
-12.0
+6.0
 1
 1
 NIL
