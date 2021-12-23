@@ -181,7 +181,7 @@ to assign-weights
   ifelse highrandom < 5.5 [
     set himedlow_knowledge_development (1 + random-float 1)
     ]
-    [ifelse random-float 100 < 5.6 [
+    [ifelse random-float 100 > 94.4 [
       set himedlow_knowledge_development (random-float 1)
     ]
       [set himedlow_knowledge_development 0]]
@@ -189,15 +189,34 @@ to assign-weights
   ifelse highrandom < 5.6 [
    set himedlow_water_demand (1 + random-float 1)
   ]
-  [ ifelse random-float 100 < 55 [
+  [ ifelse random-float 100 > 45 [
     set himedlow_water_demand (random-float 1)
     ]
     [ set himedlow_water_demand 0
   ]]
 
+  ifelse highrandom < 29 [
+    set himedlow_rainfall (1 + random-float 1)
+  ]
+  [set himedlow_rainfall 0]
+
+  ifelse highrandom > 75 [
+     set himedlow_regulations (random-float 1)
+  ]
+  [ set himedlow_regulations 0]
+
+  ifelse highrandom < 5 [
+    set himedlow_trust_government (1 + random-float 1)
+  ]
+  [ set himedlow_trust_government 0]
+
   ; calculate the weight
   set weight_knowledge_development (himedlow_knowledge_development * knowledge_development)
   set weight_water_demand (himedlow_water_demand * water_demand)
+  set weight_rainfall (himedlow_rainfall * rainfall)
+  set weight_regulations (himedlow_regulations * regulations)
+  set weight_trust_government (himedlow_trust_government * trust_government)
+
 
 
 end
@@ -406,9 +425,18 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
    set benefit (benefit + weight_knowledge_development * knowledge_development)
   ]
 
-  ifelse himedlow_water_demand > 1
+  ifelse himedlow_water_demand < 1
   [set benefit (benefit - weight_water_demand * water_demand)]
-  [ set risk (risk - weight_water_demand * water_demand)]
+  [set risk (risk - weight_water_demand * water_demand)]
+
+  if himedlow_regulations < 1
+  [set risk (risk - weight_regulations * regulations) ]
+
+  if himedlow_rainfall > 1
+  [set risk (risk + weight_rainfall * rainfall)]
+
+  if himedlow_trust_government > 1
+  [set risk (risk + weight_trust_government * trust_government)]
 
 end
 
