@@ -79,8 +79,24 @@ to setup
   set max_network_size 6 ; network does not include agent themselves, so they have 6 agents in their network max
   set cluster_list ["optimistic" "neutral" "alarmed" "conflicted"]
 
+  setuppatches
   setupconsumers
   setupfarmers
+
+end
+
+to setuppatches
+  ask patches [
+    ifelse pxcor < 35 and pycor >= 45
+    [set pcolor green]
+    [ifelse pxcor < 45 and pycor < 45
+      [set pcolor black]
+      [ifelse pxcor >= 45 and pycor < 35
+        [set pcolor red]
+        [set pcolor orange]
+      ]
+    ]
+  ]
 
 end
 
@@ -316,22 +332,26 @@ to consumers-risk-benefit
   ; Let all consumers change their r and b based on external factors before they start communicating with eachother
   ask consumers [change-R-and-B] ; do first the leaders need to update this? It includes external factors & changing r and b
 
-  con-leaders-pick
+  set agentset consumers
+  leaders-pick
 ;  setup-external-factors
-  con-pick
+  pick
 
 end
 
 to farmers-risk-benefit
   ask farmers [change-R-and-B] ; do first the leaders need to update this?
 
-
+  set agentset farmers
+  leaders-pick
+;  setup-external-factors
+  pick
 
 end
 
-to con-leaders-pick
+to leaders-pick
 
-  ask consumers with [leader? = true and in_conversation? = false]
+  ask agentset with [leader? = true and in_conversation? = false]
   [
     ; pick a random (?) number of agents from your network
     let conversation_partner nobody
@@ -349,15 +369,15 @@ to con-leaders-pick
 
     ; if chance is 0, 1 or 2, pick consumer from own cluster
     ifelse chance < 3
-      [set conversation_partner one-of other consumers with [ cluster = [cluster] of self and in_conversation? = false and leader? = false]]
+      [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false and leader? = false]]
       ; elif chance is 3 pick consumer from other cluster at position 0 of clusterlist without own cluster in it
       [ifelse chance = 3
-        [set conversation_partner one-of consumers with [ cluster = item 0 temp_cluster_list and in_conversation? = false and leader? = false]]
+        [set conversation_partner one-of agentset with [ cluster = item 0 temp_cluster_list and in_conversation? = false and leader? = false]]
         ; elif chance is 4 pick consumer from other cluster at position 1 of clusterlist without own cluster in it
         [ifelse chance = 4
-          [set conversation_partner one-of consumers with [ cluster = item 1 temp_cluster_list and in_conversation? = false and leader? = false]]
+          [set conversation_partner one-of agentset with [ cluster = item 1 temp_cluster_list and in_conversation? = false and leader? = false]]
           ; else pick consumer from other cluster at position 2 of clusterlist without own cluster in it
-          [set conversation_partner one-of consumers with [ cluster = item 2 temp_cluster_list and in_conversation? = false and leader? = false]]
+          [set conversation_partner one-of agentset with [ cluster = item 2 temp_cluster_list and in_conversation? = false and leader? = false]]
       ]
     ]
 
@@ -373,8 +393,8 @@ to con-leaders-pick
 
 end
 
-to con-pick
-  ask consumers with [leader? = false]
+to pick
+  ask agentset with [leader? = false]
   [
     ; pick a random (?) number of agents from your network
     let conversation_partner nobody
@@ -391,15 +411,15 @@ to con-pick
 
     ; if chance is 0, 1 or 3, pick consumer from own cluster
     ifelse chance < 3
-      [set conversation_partner one-of other consumers with [ cluster = [cluster] of self and in_conversation? = false]]
+      [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false]]
       ; elif chance is 3 pick consumer from other cluster at position 0 of clusterlist without own cluster in it
       [ifelse chance = 3
-        [set conversation_partner one-of consumers with [ cluster = item 0 temp_cluster_list and in_conversation? = false]]
+        [set conversation_partner one-of agentset with [ cluster = item 0 temp_cluster_list and in_conversation? = false]]
         ; elif chance is 4 pick consumer from other cluster at position 1 of clusterlist without own cluster in it
         [ifelse chance = 4
-          [set conversation_partner one-of consumers with [ cluster = item 1 temp_cluster_list and in_conversation? = false]]
+          [set conversation_partner one-of agentset with [ cluster = item 1 temp_cluster_list and in_conversation? = false]]
           ; else pick consumer from other cluster at position 2 of clusterlist without own cluster in it
-          [set conversation_partner one-of consumers with [ cluster = item 2 temp_cluster_list and in_conversation? = false]]
+          [set conversation_partner one-of agentset with [ cluster = item 2 temp_cluster_list and in_conversation? = false]]
       ]
     ]
 
@@ -454,6 +474,8 @@ to conversation [person1 person2]
 
   let new_risk 0
   let new_benefit 0
+  let D sqrt (([risk] of person1 - [risk] of person2) ^ 2 - ([benefit] of person1 - [benefit] of person2) ^ 2)
+  let F 2 + 2 * (D /
 
   let risk_change ((([risk] of person1 * [influence] of person1) - ([risk] of person2 * [influence] of person1)) / 2)
   if debug? [
@@ -1162,7 +1184,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.2
+NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
