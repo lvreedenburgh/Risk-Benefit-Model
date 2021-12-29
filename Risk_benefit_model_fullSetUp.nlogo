@@ -32,6 +32,8 @@ turtles-own [
   himedlow_GDP ; farmers only
 
   leader_in_network?
+  new_risk
+  new_benefit
 ]
 consumers-own [
   cluster ; in which cluster is consumer
@@ -179,10 +181,10 @@ to assigntoclusters
   ask n-of (alarmed_% * count agentset) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
   ask n-of (conflicted_% * count agentset) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
 
-  ask agentset with [cluster = "optimistic"] [set risk random-normal 24.3 7.1 set benefit random-normal 57.7 6.5]
-  ask agentset with [cluster = "neutral"] [set risk random-normal 36.1 6.5 set benefit random-normal 39.1 7.0]
-  ask agentset with [cluster = "alarmed"] [set risk random-normal 55.2 7.8 set benefit random-normal 26.5 8.8]
-  ask agentset with [cluster = "conflicted"] [set risk random-normal 46.3 7.1 set benefit random-normal 48.8 6.8]
+  ask agentset with [cluster = "optimistic"] [set new_risk random-normal 24.3 7.1 set new_benefit random-normal 57.7 6.5 setRandB new_risk new_benefit]
+  ask agentset with [cluster = "neutral"] [set new_risk random-normal 36.1 6.5 set new_benefit random-normal 39.1 7.0 setRandB new_risk new_benefit]
+  ask agentset with [cluster = "alarmed"] [set new_risk random-normal 55.2 7.8 set new_benefit random-normal 26.5 8.8 setRandB new_risk new_benefit]
+  ask agentset with [cluster = "conflicted"] [set new_risk random-normal 46.3 7.1 set new_benefit random-normal 48.8 6.8 setRandB new_risk new_benefit]
 
   ask agentset [setxy risk benefit]
 end
@@ -470,19 +472,22 @@ to conversation [person1 person2]
     print person1
     print "risk of person1"
     print [risk] of person1
+    print "benefit of person1"
+    print [benefit] of person1
   ]
 
-  let new_risk 0
-  let new_benefit 0
-  let D sqrt (([risk] of person1 - [risk] of person2) ^ 2 - ([benefit] of person1 - [benefit] of person2) ^ 2)
-  let F 2 + 2 * (D /
+  let D sqrt abs(([risk] of person1 - [risk] of person2) ^ 2 - ([benefit] of person1 - [benefit] of person2) ^ 2)
+  let F 2 + 2 * (D / 98.994949) ; Dmax =98.994949 = sqrt abs((70-0) ^ 2 - (70-0) ^ 2)
 
-  let risk_change ((([risk] of person1 * [influence] of person1) - ([risk] of person2 * [influence] of person1)) / 2)
+  let risk_change ((([risk] of person1 * [influence] of person1) - ([risk] of person2 * [influence] of person1)) / F)
   if debug? [
     print "risk change"
     print risk_change
   ]
-  let benefit_change ((([benefit] of person1 * [influence] of person1) - ([benefit] of person2 * [influence] of person1)) / 2)
+
+
+
+  let benefit_change ((([benefit] of person1 * [influence] of person1) - ([benefit] of person2 * [influence] of person1)) / F)
   if debug? [
     print "benefit change"
     print benefit_change
@@ -490,33 +495,8 @@ to conversation [person1 person2]
 
   ask person1 [
    set new_risk ([risk] of person1 - risk_change)
-   ifelse 0 < new_risk and new_risk < 70
-    [set risk new_risk]
-    [ifelse new_risk > 70
-      [set risk 70]
-      [set risk 0]
-    ]
-   if debug? [
-      print "new risk person1"
-      print risk
-      print "benefit of person1"
-      print [benefit] of person1
-    ]
-
-
-
    set new_benefit ([benefit] of person1 - benefit_change)
-   ifelse 0 < new_benefit and new_benefit < 70
-    [set benefit new_benefit]
-    [ifelse new_benefit > 70
-      [set benefit 70]
-      [set benefit 0]
-    ]
-   if debug? [
-      print "new benefit person1"
-      print benefit
-    ]
-
+   setRandB new_risk new_benefit
    changecluster
    setxy risk benefit]
 
@@ -525,35 +505,14 @@ to conversation [person1 person2]
     print person2
     print "risk of person2"
     print [risk] of person2
+    print "benefit of person2"
+    print [benefit] of person2
   ]
 
   ask person2 [
    set new_risk ([risk] of person2 + risk_change)
-   ifelse 0 < new_risk and new_risk < 70
-    [set risk new_risk]
-    [ifelse new_risk > 70
-      [set risk 70]
-      [set risk 0]
-    ]
-   if debug? [
-      print "new risk person2"
-      print risk
-      print "benefit of person2"
-      print [benefit] of person2
-    ]
-
    set new_benefit ([benefit] of person2 + benefit_change)
-   ifelse 0 < new_benefit and new_benefit < 70
-    [set benefit new_benefit]
-    [ifelse new_benefit > 70
-      [set benefit 70]
-      [set benefit 0]
-    ]
-   if debug? [
-      print "new benefit person2"
-      print benefit
-    ]
-
+   setRandB new_risk new_benefit
    changecluster
    setxy risk benefit]
 end
@@ -580,7 +539,32 @@ to changecluster
   ]
 end
 
+to setRandB [temp_risk temp_benefit]
+  ifelse 0 < temp_risk and temp_risk < 70
+    [set risk temp_risk]
+    [ifelse temp_risk > 70
+      [set risk 70]
+      [set risk 0]
+    ]
 
+  if debug? [
+      print "new risk"
+      print risk
+    ]
+
+  ifelse 0 < temp_benefit and temp_benefit < 70
+    [set benefit temp_benefit]
+    [ifelse temp_benefit > 70
+      [set benefit 70]
+      [set benefit 0]
+    ]
+  if debug? [
+      print "new benefit"
+      print benefit
+    ]
+
+
+end
 
 ;; Already done in interface, maybe also nice procedure for testing?
 ;to change-external-factors ; dependent on the scenario taking place, for now it is randomized
@@ -596,8 +580,8 @@ end
 GRAPHICS-WINDOW
 647
 10
-1362
-726
+1152
+516
 -1
 -1
 7.0
@@ -610,10 +594,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--10
-90
--10
-90
+0
+70
+0
+70
 0
 0
 1
