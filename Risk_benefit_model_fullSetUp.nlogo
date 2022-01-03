@@ -31,6 +31,7 @@ turtles-own [
   himedlow_rainfall ; farmers only
   himedlow_GDP ; farmers only
 
+  conversation_partner
   leader_in_network?
   new_risk
   new_benefit
@@ -74,7 +75,6 @@ globals[
 ]
 
 to setup
-  ; TO DO divide a world into clusters and colored differently
   clear-all
   reset-ticks
 
@@ -173,6 +173,8 @@ end
 
 to assigntoclusters
   ;To DO: try to avoid setting percentage as a turtle-own variable
+  ; To Do: assigncluster is now called by all agents, so it is done too often, optimistic_% etc. are turtle own right now, so you can't call the procedure form without asking turtles
+  ; When I played around with it I changed the  optimistic_% etc. to globals there were some agents that did not get assigned to clusters. I don't know how this happened but don't want to mess around too much with parts that I haven't written
 
   ask agentset [set clustered? 0]
 
@@ -243,6 +245,7 @@ end
 
 
 to setupnetworks_leaders
+  ; To Do: I have noticed that some farmers have repeated farmers in their network
 
   let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot take leaders to their network
 
@@ -356,7 +359,7 @@ to leaders-pick
   ask agentset with [leader? = true and in_conversation? = false]
   [
     ; pick a random (?) number of agents from your network
-    let conversation_partner nobody
+    set conversation_partner nobody
     let chance random 6
     let temp_cluster_list remove [cluster] of self cluster_list
 
@@ -369,25 +372,27 @@ to leaders-pick
     ]
 
 
+    set conversation_partner one-of (turtle-set network) with [in_conversation? = false and leader? = false]
+
     ; if chance is 0, 1 or 2, pick consumer from own cluster
-    ifelse chance < 3
-      [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false and leader? = false]]
+    ;ifelse chance < 3
+     ; [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false and leader? = false]]
       ; elif chance is 3 pick consumer from other cluster at position 0 of clusterlist without own cluster in it
-      [ifelse chance = 3
-        [set conversation_partner one-of agentset with [ cluster = item 0 temp_cluster_list and in_conversation? = false and leader? = false]]
+      ;[ifelse chance = 3
+       ; [set conversation_partner one-of agentset with [ cluster = item 0 temp_cluster_list and in_conversation? = false and leader? = false]]
         ; elif chance is 4 pick consumer from other cluster at position 1 of clusterlist without own cluster in it
-        [ifelse chance = 4
-          [set conversation_partner one-of agentset with [ cluster = item 1 temp_cluster_list and in_conversation? = false and leader? = false]]
+        ;[ifelse chance = 4
+         ; [set conversation_partner one-of agentset with [ cluster = item 1 temp_cluster_list and in_conversation? = false and leader? = false]]
           ; else pick consumer from other cluster at position 2 of clusterlist without own cluster in it
-          [set conversation_partner one-of agentset with [ cluster = item 2 temp_cluster_list and in_conversation? = false and leader? = false]]
-      ]
-    ]
+          ;[set conversation_partner one-of agentset with [ cluster = item 2 temp_cluster_list and in_conversation? = false and leader? = false]]
+      ;]
+    ;]
 
     if debug? [print conversation_partner]
 
     set in_conversation? true
     if conversation_partner != nobody [
-      ask conversation_partner [set in_conversation? true]
+      ask conversation_partner [set in_conversation? true set conversation_partner myself]
       conversation self conversation_partner
     ]
 
@@ -396,10 +401,10 @@ to leaders-pick
 end
 
 to pick
-  ask agentset with [leader? = false]
+  ask agentset with [leader? = false and in_conversation? = false]
   [
     ; pick a random (?) number of agents from your network
-    let conversation_partner nobody
+    set conversation_partner nobody
     let chance random 6
     let temp_cluster_list remove [cluster] of self cluster_list
 
@@ -411,26 +416,28 @@ to pick
       print self
     ]
 
+    set conversation_partner one-of (turtle-set network) with [in_conversation? = false and leader? = false]
+
     ; if chance is 0, 1 or 3, pick consumer from own cluster
-    ifelse chance < 3
-      [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false]]
+    ;ifelse chance < 3
+     ; [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false]]
       ; elif chance is 3 pick consumer from other cluster at position 0 of clusterlist without own cluster in it
-      [ifelse chance = 3
-        [set conversation_partner one-of agentset with [ cluster = item 0 temp_cluster_list and in_conversation? = false]]
+      ;[ifelse chance = 3
+       ; [set conversation_partner one-of agentset with [ cluster = item 0 temp_cluster_list and in_conversation? = false]]
         ; elif chance is 4 pick consumer from other cluster at position 1 of clusterlist without own cluster in it
-        [ifelse chance = 4
-          [set conversation_partner one-of agentset with [ cluster = item 1 temp_cluster_list and in_conversation? = false]]
+        ;[ifelse chance = 4
+         ; [set conversation_partner one-of agentset with [ cluster = item 1 temp_cluster_list and in_conversation? = false]]
           ; else pick consumer from other cluster at position 2 of clusterlist without own cluster in it
-          [set conversation_partner one-of agentset with [ cluster = item 2 temp_cluster_list and in_conversation? = false]]
-      ]
-    ]
+          ;[set conversation_partner one-of agentset with [ cluster = item 2 temp_cluster_list and in_conversation? = false]]
+      ;]
+    ;]
 
     ; the last consumers that get to pick often return nobody, because the consumers from the cluster they picked are already taken
     if debug? [print conversation_partner]
 
     set in_conversation? true
     if conversation_partner != nobody [
-      ask conversation_partner [set in_conversation? true]
+      ask conversation_partner [set in_conversation? true set conversation_partner myself]
       conversation self conversation_partner
     ]
 
@@ -1168,7 +1175,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
