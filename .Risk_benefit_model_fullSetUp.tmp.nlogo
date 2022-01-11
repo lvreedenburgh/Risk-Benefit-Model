@@ -28,14 +28,13 @@ turtles-own [
   himedlow_trust_agriculture ; consumers only
   himedlow_regulations
   himedlow_water_demand ; farmers only
-  himedlow_rainfall ; farmers only
+  himedlow_rainfall ; farmers only: high rainfall means they are less concerned about having droughts, whereas low means they are very concerned about having droughts.
   himedlow_GDP ; farmers only
 
   conversation_partner
   leader_in_network?
   new_risk
   new_benefit
-
 ]
 consumers-own [
   cluster ; in which cluster is consumer
@@ -76,7 +75,6 @@ globals[
 ]
 
 to setup
-  ; TO DO divide a world into clusters and colored differently
   clear-all
   reset-ticks
 
@@ -202,44 +200,58 @@ to assign-weights
 
   let highrandom (random-float 100 )
 
-  ifelse highrandom < 5.5 [
-    set himedlow_knowledge_development (1 + random-float 1); change numbers: knowledge developmnet as a lack of information
+  ifelse highrandom < 13 [
+    set weight_knowledge_development (1 + random-float 1)
     ]
-    [ifelse random-float 100 > 94.4 [
-      set himedlow_knowledge_development (random-float 1)
+    [ifelse random-float 100 > 74 [
+      set weight_knowledge_development (random-float 1)
     ]
-      [set himedlow_knowledge_development 0]]
+      [set weight_knowledge_development 0]]
 
   ifelse highrandom < 5.6 [
-   set himedlow_water_demand (1 + random-float 1)
+   set weight_water_demand (1 + random-float 1)
   ]
   [ ifelse random-float 100 > 45 [
-    set himedlow_water_demand (random-float 1)
+    set weight_water_demand (random-float 1)
     ]
-    [ set himedlow_water_demand 0
+    [ set weight_water_demand 0
   ]]
 
-  ifelse highrandom < 29 [
-    set himedlow_rainfall (1 + random-float 1)
+  ;; Education level is taken as GDP as  there is a lot of research clearly linking the education expenditure of a country to GDP.
+  ifelse highrandom < 22 [
+   set weight_GDP (1 + random-float 1)
   ]
-  [set himedlow_rainfall 0]
+  [ ifelse random-float 100 > 96.3 [
+    set weight_GDP (random-float 1)
+    ]
+    [ set weight_GDP 0
+  ]]
+
+
+  ;;; Doubting whether this needs to have a low and high or just leave it at it is.
+  ifelse highrandom < 29 [
+    set weight_rainfall (1 + random-float 1)
+  ]
+  [set weight_rainfall 0]
 
   ifelse highrandom > 75 [
-     set himedlow_regulations (random-float 1)
+     set weight_regulations (random-float 1)
   ]
-  [ set himedlow_regulations 0]
+  [ set weight_regulations 0]
 
   ifelse highrandom < 5 [
-    set himedlow_trust_government (1 + random-float 1)
+    set weight_trust_government (1 + random-float 1)
   ]
-  [ set himedlow_trust_government 0]
+  [ set weight_trust_government 0]
 
-  ; calculate the weight
-  set weight_knowledge_development (himedlow_knowledge_development * knowledge_development)
-  set weight_water_demand (himedlow_water_demand * water_demand)
-  set weight_rainfall (himedlow_rainfall * rainfall)
-  set weight_regulations (himedlow_regulations * regulations)
-  set weight_trust_government (himedlow_trust_government * trust_government)
+
+
+;  ; calculate the weight
+;  set weight_knowledge_development (himedlow_knowledge_development * knowledge_development)
+;  set weight_water_demand (himedlow_water_demand * water_demand)
+;  set weight_rainfall (himedlow_rainfall * rainfall)
+;  set weight_regulations (himedlow_regulations * regulations)
+;  set weight_trust_government (himedlow_trust_government * trust_government)
 
 
 
@@ -376,7 +388,6 @@ to leaders-pick
 
     set conversation_partner one-of (turtle-set network) with [in_conversation? = false and leader? = false]
 
-
     ; if chance is 0, 1 or 2, pick consumer from own cluster
     ;ifelse chance < 3
      ; [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false and leader? = false]]
@@ -391,10 +402,7 @@ to leaders-pick
       ;]
     ;]
 
-    if debug? [
-      print "conversation partner is"
-      print conversation_partner
-    ]
+    if debug? [print conversation_partner]
 
     set in_conversation? true
     if conversation_partner != nobody [
@@ -426,7 +434,7 @@ to pick
 
     ; if chance is 0, 1 or 3, pick consumer from own cluster
     ;ifelse chance < 3
-      ;[set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false]]
+     ; [set conversation_partner one-of other agentset with [ cluster = [cluster] of self and in_conversation? = false]]
       ; elif chance is 3 pick consumer from other cluster at position 0 of clusterlist without own cluster in it
       ;[ifelse chance = 3
        ; [set conversation_partner one-of agentset with [ cluster = item 0 temp_cluster_list and in_conversation? = false]]
@@ -439,10 +447,7 @@ to pick
     ;]
 
     ; the last consumers that get to pick often return nobody, because the consumers from the cluster they picked are already taken
-    if debug? [
-      print "conversation partner is"
-      print conversation_partner
-    ]
+    if debug? [print conversation_partner]
 
     set in_conversation? true
     if conversation_partner != nobody [
@@ -457,22 +462,32 @@ end
 
 
 to change-R-and-B ; change the risk and benefit for the consumer or farmer
-  ifelse himedlow_knowledge_development > 1
-  [set risk (risk + weight_knowledge_development * knowledge_development)
-   set benefit (benefit - weight_knowledge_development * knowledge_development)
-  ]
+;; adding some explanation per factor why there is a plus or a minus
+
+
+;; If there is a high knowledge development (>1) the risk is lower and benefit higher.
+;; if there is a low knowledge development (<1) the risk is higher and the benefit lower.
+  ifelse himedlow_knowledge_development > 1 ; knowledge reuse project and insufficient information in the paper
   [set risk (risk - weight_knowledge_development * knowledge_development)
    set benefit (benefit + weight_knowledge_development * knowledge_development)
   ]
+  [set risk (risk + weight_knowledge_development * knowledge_development)
+   set benefit (benefit - weight_knowledge_development * knowledge_development)
+  ]
 
+;; If there is a high water demand, there is a higher benefit and lower perceived risk
+;; If there is a low water demand, there is a higer perceived risk and lower benefit
   ifelse himedlow_water_demand < 1
-  [set benefit (benefit - weight_water_demand * water_demand)]
-  [set risk (risk - weight_water_demand * water_demand)]
+  [set benefit (benefit - weight_water_demand * water_demand)
+   set risk (risk + weight_water_demand * water_demand)
+  ]
+  [ set benefit (benefit + weight_water_demand * water_demand)
+    set risk (risk - weight_water_demand * water_demand)]
 
-  if himedlow_regulations < 1
+  if himedlow_regulations < 1 ; perceived control in the paper
   [set risk (risk - weight_regulations * regulations) ]
 
-  if himedlow_rainfall > 1
+  if himedlow_rainfall > 1 ; drought experience in the paper
   [set risk (risk + weight_rainfall * rainfall)]
 
   if himedlow_trust_government > 1
@@ -481,6 +496,7 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 end
 
 to conversation [person1 person2]
+; TO DO: set influecne as a function of distance
   ; calculate
   if debug? [
     print "person1"
@@ -489,6 +505,33 @@ to conversation [person1 person2]
     print [risk] of person1
     print "benefit of person1"
     print [benefit] of person1
+  ]
+
+  let D sqrt abs(([risk] of person1 - [risk] of person2) ^ 2 - ([benefit] of person1 - [benefit] of person2) ^ 2)
+  let F 2 + 2 * (D / 98.994949) ; Dmax =98.994949 = sqrt abs((70-0) ^ 2 - (70-0) ^ 2)
+
+  let risk_change ((([risk] of person1 * [influence] of person1) - ([risk] of person2 * [influence] of person1)) / F)
+  if debug? [
+    print "risk change"
+    print risk_change
+  ]
+
+
+
+  let benefit_change ((([benefit] of person1 * [influence] of person1) - ([benefit] of person2 * [influence] of person1)) / F)
+  if debug? [
+    print "benefit change"
+    print benefit_change
+  ]
+
+  ask person1 [
+   set new_risk ([risk] of person1 - risk_change)
+   set new_benefit ([benefit] of person1 - benefit_change)
+   setRandB new_risk new_benefit
+   changecluster
+   setxy risk benefit]
+
+  if debug? [
     print "person2"
     print person2
     print "risk of person2"
@@ -497,37 +540,9 @@ to conversation [person1 person2]
     print [benefit] of person2
   ]
 
-  ; If two agents differ from each other on the risk benefit spectrum, they influence each other less
-  let D sqrt abs(([risk] of person1 - [risk] of person2) ^ 2 + ([benefit] of person1 - [benefit] of person2) ^ 2)
-  let F ([influence] of person1 + [influence] of person2) + 2 * (D / 98.994949) ; Dmax =98.994949 = sqrt abs((70-0) ^ 2 + (70-0) ^ 2)
-
-  ; Calculate the risk level of the conversation
-  let avg_conversation_risk ((([risk] of person1 * [influence] of person1) + ([risk] of person2 * [influence] of person2)) / ([influence] of person1 + [influence] of person2))
-  if debug? [
-    print "D"
-    print D
-    print "F"
-    print F
-    print "avg conversation_risk"
-    print avg_conversation_risk
-  ]
-
-  ; Calculate the benefit level of the conversation
-  let avg_conversation_benefit ((([benefit] of person1 * [influence] of person1) + ([benefit] of person2 * [influence] of person2)) / ([influence] of person1 + [influence] of person2))
-  if debug? [
-    print "avg_conversation benefit"
-    print avg_conversation_benefit
-  ]
-
-  ask person1 [
-   set new_risk ([risk] of person1 - (([risk] of person1 - avg_conversation_risk) / F))
-   set new_benefit ([benefit] of person1 - (([benefit] of person1 - avg_conversation_benefit) / F))
-   setRandB new_risk new_benefit
-   changecluster
-   setxy risk benefit]
-
   ask person2 [
-
+   set new_risk ([risk] of person2 + risk_change)
+   set new_benefit ([benefit] of person2 + benefit_change)
    setRandB new_risk new_benefit
    changecluster
    setxy risk benefit]
@@ -539,11 +554,10 @@ to changecluster
     print cluster
   ]
 
-  ; If risk and benefit value cross thresholds. change cluster
   ifelse risk < 35 and benefit > 45
     [set cluster "optimistic"]
     [ifelse risk < 45 and benefit < 45
-      [set cluster "neutral"]
+      [set cluster "disengaged"]
       [ifelse risk > 45 and benefit < 35
         [set cluster "alarmed"]
         [set cluster "conflicted"]
@@ -557,8 +571,6 @@ to changecluster
 end
 
 to setRandB [temp_risk temp_benefit]
-  ; Risk and Benefit are limited to the range of 0 - 70
-  ; If a value falls outside of this range it assumes the min or max
   ifelse 0 < temp_risk and temp_risk < 70
     [set risk temp_risk]
     [ifelse temp_risk > 70
@@ -631,7 +643,7 @@ CHOOSER
 GDP
 GDP
 1 2 3
-2
+0
 
 CHOOSER
 30
@@ -641,7 +653,7 @@ CHOOSER
 rainfall
 rainfall
 1 2 3
-0
+2
 
 CHOOSER
 30
@@ -651,7 +663,7 @@ CHOOSER
 water_demand
 water_demand
 1 2 3
-2
+0
 
 CHOOSER
 30
@@ -671,7 +683,7 @@ CHOOSER
 regulations
 regulations
 1 2 3
-0
+2
 
 CHOOSER
 30
@@ -826,7 +838,7 @@ SWITCH
 445
 debug?
 debug?
-0
+1
 1
 -1000
 
@@ -1187,7 +1199,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

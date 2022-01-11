@@ -28,7 +28,7 @@ turtles-own [
   himedlow_trust_agriculture ; consumers only
   himedlow_regulations
   himedlow_water_demand ; farmers only
-  himedlow_rainfall ; farmers only
+  himedlow_rainfall ; farmers only: high rainfall means they are less concerned about having droughts, whereas low means they are very concerned about having droughts.
   himedlow_GDP ; farmers only
 
   conversation_partner
@@ -200,44 +200,58 @@ to assign-weights
 
   let highrandom (random-float 100 )
 
-  ifelse highrandom < 5.5 [
-    set himedlow_knowledge_development (1 + random-float 1); change numbers: knowledge developmnet as a lack of information
+  ifelse highrandom < 13 [
+    set weight_knowledge_development (1 + random-float 1)
     ]
-    [ifelse random-float 100 > 94.4 [
-      set himedlow_knowledge_development (random-float 1)
+    [ifelse random-float 100 > 74 [
+      set weight_knowledge_development (random-float 1)
     ]
-      [set himedlow_knowledge_development 0]]
+      [set weight_knowledge_development 0]]
 
   ifelse highrandom < 5.6 [
-   set himedlow_water_demand (1 + random-float 1)
+   set weight_water_demand (1 + random-float 1)
   ]
   [ ifelse random-float 100 > 45 [
-    set himedlow_water_demand (random-float 1)
+    set weight_water_demand (random-float 1)
     ]
-    [ set himedlow_water_demand 0
+    [ set weight_water_demand 0
   ]]
 
-  ifelse highrandom < 29 [
-    set himedlow_rainfall (1 + random-float 1)
+  ;; Education level is taken as GDP as  there is a lot of research clearly linking the education expenditure of a country to GDP.
+  ifelse highrandom < 22 [
+   set weight_GDP (1 + random-float 1)
   ]
-  [set himedlow_rainfall 0]
+  [ ifelse random-float 100 > 96.3 [
+    set weight_GDP (random-float 1)
+    ]
+    [ set weight_GDP 0
+  ]]
+
+
+  ;;; Doubting whether this needs to have a low and high or just leave it at it is.
+  ifelse highrandom < 29 [
+    set weight_rainfall (1 + random-float 1)
+  ]
+  [set weight_rainfall 0]
 
   ifelse highrandom > 75 [
-     set himedlow_regulations (random-float 1)
+     set weight_regulations (random-float 1)
   ]
-  [ set himedlow_regulations 0]
+  [ set weight_regulations 0]
 
   ifelse highrandom < 5 [
-    set himedlow_trust_government (1 + random-float 1)
+    set weight_trust_government (1 + random-float 1)
   ]
-  [ set himedlow_trust_government 0]
+  [ set weight_trust_government 0]
 
-  ; calculate the weight
-  set weight_knowledge_development (himedlow_knowledge_development * knowledge_development)
-  set weight_water_demand (himedlow_water_demand * water_demand)
-  set weight_rainfall (himedlow_rainfall * rainfall)
-  set weight_regulations (himedlow_regulations * regulations)
-  set weight_trust_government (himedlow_trust_government * trust_government)
+
+
+;  ; calculate the weight
+;  set weight_knowledge_development (himedlow_knowledge_development * knowledge_development)
+;  set weight_water_demand (himedlow_water_demand * water_demand)
+;  set weight_rainfall (himedlow_rainfall * rainfall)
+;  set weight_regulations (himedlow_regulations * regulations)
+;  set weight_trust_government (himedlow_trust_government * trust_government)
 
 
 
@@ -448,22 +462,32 @@ end
 
 
 to change-R-and-B ; change the risk and benefit for the consumer or farmer
-  ifelse himedlow_knowledge_development > 1
-  [set risk (risk + weight_knowledge_development * knowledge_development)
-   set benefit (benefit - weight_knowledge_development * knowledge_development)
-  ]
+;; adding some explanation per factor why there is a plus or a minus
+
+
+;; If there is a high knowledge development (>1) the risk is lower and benefit higher.
+;; if there is a low knowledge development (<1) the risk is higher and the benefit lower.
+  ifelse himedlow_knowledge_development > 1 ; knowledge reuse project and insufficient information in the paper
   [set risk (risk - weight_knowledge_development * knowledge_development)
    set benefit (benefit + weight_knowledge_development * knowledge_development)
   ]
+  [set risk (risk + weight_knowledge_development * knowledge_development)
+   set benefit (benefit - weight_knowledge_development * knowledge_development)
+  ]
 
+;; If there is a high water demand, there is a higher benefit and lower perceived risk
+;; If there is a low water demand, there is a higer perceived risk and lower benefit
   ifelse himedlow_water_demand < 1
-  [set benefit (benefit - weight_water_demand * water_demand)]
-  [set risk (risk - weight_water_demand * water_demand)]
+  [set benefit (benefit - weight_water_demand * water_demand)
+   set risk (risk + weight_water_demand * water_demand)
+  ]
+  [ set benefit (benefit + weight_water_demand * water_demand)
+    set risk (risk - weight_water_demand * water_demand)]
 
-  if himedlow_regulations < 1
+  if himedlow_regulations < 1 ; perceived control in the paper
   [set risk (risk - weight_regulations * regulations) ]
 
-  if himedlow_rainfall > 1
+  if himedlow_rainfall > 1 ; drought experience in the paper
   [set risk (risk + weight_rainfall * rainfall)]
 
   if himedlow_trust_government > 1
@@ -1175,7 +1199,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
