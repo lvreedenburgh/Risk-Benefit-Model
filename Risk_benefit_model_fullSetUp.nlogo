@@ -475,23 +475,39 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
    set benefit (benefit - weight_knowledge_development * knowledge_development)
   ]
 
-;; If there is a high water demand, there is a higher benefit and lower perceived risk
-;; If there is a low water demand, there is a higer perceived risk and lower benefit
-  ifelse himedlow_water_demand < 1
-  [set benefit (benefit - weight_water_demand * water_demand)
-   set risk (risk + weight_water_demand * water_demand)
-  ]
-  [ set benefit (benefit + weight_water_demand * water_demand)
-    set risk (risk - weight_water_demand * water_demand)]
+;; high trust = low risk
+  ifelse himedlow_trust_government > 1
+  [set risk (risk - weight_trust_government * trust_government)]
+  [set risk (risk + weight_trust_government * trust_government)]
 
-  if himedlow_regulations < 1 ; perceived control in the paper
+;; high perceived control = low risk (vice versa)
+  ifelse himedlow_regulations < 1 ; perceived control in the paper
+  [set risk (risk + weight_regulations * regulations)]
   [set risk (risk - weight_regulations * regulations) ]
 
-  if himedlow_rainfall > 1 ; drought experience in the paper
-  [set risk (risk + weight_rainfall * rainfall)]
+;; If there is a high water demand, there is a higher benefit and lower perceived risk (the benefit is assumed)
+;; If there is a low water demand, there is a higer perceived risk and lower benefit (the benefit is assumed)
+  if is-farmer? true [
+    ifelse himedlow_water_demand < 1
+    [set benefit (benefit - weight_water_demand * water_demand)
+      set risk (risk + weight_water_demand * water_demand)
+    ]
+    [ set benefit (benefit + weight_water_demand * water_demand)
+      set risk (risk - weight_water_demand * water_demand)]
 
-  if himedlow_trust_government > 1
-  [set risk (risk + weight_trust_government * trust_government)]
+    ifelse himedlow_GDP < 1
+    [set risk (risk + weight_GDP * GDP) ]
+    [set benefit (benefit + weight_GDP * GDP) ]
+
+;; if there is a high confidence rainfall will be enough, there is a lower perceived risk
+    ifelse himedlow_rainfall > 1 ; drought experience in the paper
+    [set risk (risk - weight_rainfall * rainfall)]
+    [set risk (risk + weight_rainfall * rainfall)]
+
+  ]
+
+
+
 
 end
 
