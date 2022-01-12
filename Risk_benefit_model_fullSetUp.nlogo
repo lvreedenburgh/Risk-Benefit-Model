@@ -22,14 +22,14 @@ turtles-own [
   weight_rainfall ; farmers only
   weight_GDP ; farmers only
 
-  ; assign high, medium, low priority for agent on this external factor
-  himedlow_knowledge_development
-  himedlow_trust_government
-  himedlow_trust_agriculture ; consumers only
-  himedlow_regulations
-  himedlow_water_demand ; farmers only
-  himedlow_rainfall ; farmers only: high rainfall means they are less concerned about having droughts, whereas low means they are very concerned about having droughts.
-  himedlow_GDP ; farmers only
+;  ; assign high, medium, low priority for agent on this external factor
+;  himedlow_knowledge_development
+;  himedlow_trust_government
+;  himedlow_trust_agriculture ; consumers only
+;  himedlow_regulations
+;  himedlow_water_demand ; farmers only
+;  himedlow_rainfall ; farmers only: high rainfall means they are less concerned about having droughts, whereas low means they are very concerned about having droughts.
+;  himedlow_GDP ; farmers only
 
   conversation_partner
   leader_in_network?
@@ -243,6 +243,11 @@ to assign-weights
     set weight_trust_government (1 + random-float 1)
   ]
   [ set weight_trust_government 0]
+
+  ifelse highrandom < 58 [
+    set weight_trust_agriculture (1 + random-float 1)
+  ]
+  [ set weight_trust_agriculture 0]
 
 
 
@@ -467,7 +472,7 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 
 ;; If there is a high knowledge development (>1) the risk is lower and benefit higher.
 ;; if there is a low knowledge development (<1) the risk is higher and the benefit lower.
-  ifelse himedlow_knowledge_development > 1 ; knowledge reuse project and insufficient information in the paper
+  ifelse weight_knowledge_development > 1 ; knowledge reuse project and insufficient information in the paper
   [set risk (risk - weight_knowledge_development * knowledge_development)
    set benefit (benefit + weight_knowledge_development * knowledge_development)
   ]
@@ -476,35 +481,42 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
   ]
 
 ;; high trust = low risk
-  ifelse himedlow_trust_government > 1
+  ifelse weight_trust_government > 1
   [set risk (risk - weight_trust_government * trust_government)]
   [set risk (risk + weight_trust_government * trust_government)]
 
 ;; high perceived control = low risk (vice versa)
-  ifelse himedlow_regulations < 1 ; perceived control in the paper
+  ifelse weight_regulations < 1 ; perceived control in the paper
   [set risk (risk + weight_regulations * regulations)]
   [set risk (risk - weight_regulations * regulations) ]
 
 ;; If there is a high water demand, there is a higher benefit and lower perceived risk (the benefit is assumed)
 ;; If there is a low water demand, there is a higer perceived risk and lower benefit (the benefit is assumed)
   if is-farmer? true [
-    ifelse himedlow_water_demand < 1
+    ifelse weight_water_demand < 1
     [set benefit (benefit - weight_water_demand * water_demand)
       set risk (risk + weight_water_demand * water_demand)
     ]
     [ set benefit (benefit + weight_water_demand * water_demand)
       set risk (risk - weight_water_demand * water_demand)]
 
-    ifelse himedlow_GDP < 1
+    ifelse weight_GDP < 1
     [set risk (risk + weight_GDP * GDP) ]
     [set benefit (benefit + weight_GDP * GDP) ]
 
 ;; if there is a high confidence rainfall will be enough, there is a lower perceived risk
-    ifelse himedlow_rainfall > 1 ; drought experience in the paper
+    ifelse weight_rainfall > 1 ; drought experience in the paper
     [set risk (risk - weight_rainfall * rainfall)]
     [set risk (risk + weight_rainfall * rainfall)]
 
   ]
+
+  if is-consumer? true [
+    ifelse weight_trust_agriculture > 1
+    [set risk (risk - weight_trust_agriculture * trust_agriculture)]
+    [set risk (risk + weight_trust_agriculture * trust_agriculture)]
+  ]
+
 
 
 
@@ -1216,7 +1228,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
