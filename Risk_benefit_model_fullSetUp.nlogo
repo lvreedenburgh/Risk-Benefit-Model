@@ -114,7 +114,7 @@ to setupconsumers
     set neutral_% 0.396
     set alarmed_% 0.118
     set conflicted_% 0.234
-
+    assign-weights
   ]
 
   set agentset consumers
@@ -512,7 +512,6 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 end
 
 to conversation [person1 person2]
-; TO DO: set influecne as a function of distance
   ; calculate
   if debug? [
     print "person1"
@@ -521,33 +520,6 @@ to conversation [person1 person2]
     print [risk] of person1
     print "benefit of person1"
     print [benefit] of person1
-  ]
-
-  let D sqrt abs(([risk] of person1 - [risk] of person2) ^ 2 - ([benefit] of person1 - [benefit] of person2) ^ 2)
-  let F 2 + 2 * (D / 98.994949) ; Dmax =98.994949 = sqrt abs((70-0) ^ 2 - (70-0) ^ 2)
-
-  let risk_change ((([risk] of person1 * [influence] of person1) - ([risk] of person2 * [influence] of person1)) / F)
-  if debug? [
-    print "risk change"
-    print risk_change
-  ]
-
-
-
-  let benefit_change ((([benefit] of person1 * [influence] of person1) - ([benefit] of person2 * [influence] of person1)) / F)
-  if debug? [
-    print "benefit change"
-    print benefit_change
-  ]
-
-  ask person1 [
-   set new_risk ([risk] of person1 - risk_change)
-   set new_benefit ([benefit] of person1 - benefit_change)
-   setRandB new_risk new_benefit
-   changecluster
-   setxy risk benefit]
-
-  if debug? [
     print "person2"
     print person2
     print "risk of person2"
@@ -556,13 +528,42 @@ to conversation [person1 person2]
     print [benefit] of person2
   ]
 
+  ; Calculate the risk level of the conversation
+  let avg_conversation_risk ((([risk] of person1 * [influence] of person1) + ([risk] of person2 * [influence] of person2)) / ([influence] of person1 + [influence] of person2))
+
+  ; Calculate the benefit level of the conversation
+  let avg_conversation_benefit ((([benefit] of person1 * [influence] of person1) + ([benefit] of person2 * [influence] of person2)) / ([influence] of person1 + [influence] of person2))
+
+  ; If two agents differ from each other on the risk benefit spectrum, they influence each other less
+  let D sqrt abs(([risk] of person1 - [risk] of person2) ^ 2 + ([benefit] of person1 - [benefit] of person2) ^ 2)
+  let F ([influence] of person1 + [influence] of person2) + 2 * (D / 98.994949) ; Dmax =98.994949 = sqrt abs((70-0) ^ 2 + (70-0) ^ 2)
+
+  if debug? [
+    print "D"
+    print D
+    print "F"
+    print F
+    print "avg conversation_risk"
+    print avg_conversation_risk
+    print "avg_conversation benefit"
+    print avg_conversation_benefit
+  ]
+
+  ask person1 [
+   set new_risk ([risk] of person1 - (([risk] of person1 - avg_conversation_risk) / F))
+   set new_benefit ([benefit] of person1 - (([benefit] of person1 - avg_conversation_benefit) / F))
+   setRandB new_risk new_benefit
+   changecluster
+   setxy risk benefit]
+
   ask person2 [
-   set new_risk ([risk] of person2 + risk_change)
-   set new_benefit ([benefit] of person2 + benefit_change)
+   set new_risk ([risk] of person2 - (([risk] of person2 - avg_conversation_risk) / F))
+   set new_benefit ([benefit] of person2 - (([benefit] of person2 - avg_conversation_benefit) / F))
    setRandB new_risk new_benefit
    changecluster
    setxy risk benefit]
 end
+
 
 to changecluster
   if debug? [
@@ -669,7 +670,7 @@ CHOOSER
 rainfall
 rainfall
 1 2 3
-2
+0
 
 CHOOSER
 30
@@ -689,7 +690,7 @@ CHOOSER
 trust_government
 trust_government
 1 2 3
-2
+0
 
 CHOOSER
 30
@@ -699,7 +700,7 @@ CHOOSER
 regulations
 regulations
 1 2 3
-2
+0
 
 CHOOSER
 30
@@ -709,7 +710,7 @@ CHOOSER
 knowledge_development
 knowledge_development
 1 2 3
-2
+0
 
 CHOOSER
 30
@@ -811,7 +812,7 @@ leader_influence
 leader_influence
 0
 10
-3.0
+10.0
 1
 1
 NIL
@@ -1215,7 +1216,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.2
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
