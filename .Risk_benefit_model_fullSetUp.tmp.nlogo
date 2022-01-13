@@ -648,15 +648,15 @@ to scenarios
     ; change the values of ext_factors_list accordingly
     ifelse item i ext_change_list = "decreasing"
       [ifelse item i ext_rate_list = "gradual"
-        [set ext_factors_list replace-item i ext_factors_list (x - 1)]
+        [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 1))]
         [ifelse item i ext_rate_list = "medium"
-          [set ext_factors_list replace-item i ext_factors_list (x - 2)]
-          [set ext_factors_list replace-item i ext_factors_list (x - random 5)] ; temporary
+          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 2))]
+          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - random 5))] ; temporary
         ]
     ]
       [if item i ext_change_list = "increasing"
         [ifelse item i ext_rate_list = "gradual"
-          [set ext_factors_list replace-item i ext_factors_list (x + 1)]
+          [set ext_factors_list replace-item i ext_factors_list min (list 10000 (x + 1))]
           [ifelse item i ext_rate_list = "medium"
            [set ext_factors_list replace-item i ext_factors_list (x + 2)]
            [set ext_factors_list replace-item i ext_factors_list (x + random 5)] ; temporary
@@ -681,7 +681,7 @@ to scenarios
 
 end
 
-to basescenario
+to basevalues
   set GDP 5000
   set rainfall 5000
   set water_demand 5000
@@ -894,7 +894,7 @@ rainfall
 rainfall
 1
 10000
-5001.0
+9136.0
 100
 1
 NIL
@@ -909,7 +909,7 @@ water_demand
 water_demand
 1
 10000
-5000.0
+905.0
 100
 1
 NIL
@@ -924,7 +924,7 @@ regulations
 regulations
 1
 10000
-5000.0
+2932.0
 100
 1
 NIL
@@ -939,7 +939,7 @@ trust_agriculture
 trust_agriculture
 1
 10000
-3886.0
+5000.0
 100
 1
 NIL
@@ -1018,7 +1018,7 @@ CHOOSER
 trust_agri_change
 trust_agri_change
 "decreasing" "constant" "increasing"
-0
+1
 
 CHOOSER
 207
@@ -1068,7 +1068,7 @@ CHOOSER
 trust_gov_change
 trust_gov_change
 "decreasing" "constant" "increasing"
-0
+1
 
 CHOOSER
 346
@@ -1088,7 +1088,7 @@ CHOOSER
 know_dev_change
 know_dev_change
 "decreasing" "constant" "increasing"
-0
+2
 
 CHOOSER
 347
@@ -1109,17 +1109,17 @@ knowledge_dev
 knowledge_dev
 1
 10000
-5000.0
+7068.0
 100
 1
 NIL
 HORIZONTAL
 
 BUTTON
-212
-44
-321
-77
+211
+47
+320
+80
 Base Values
 basevalues
 NIL

@@ -648,18 +648,18 @@ to scenarios
     ; change the values of ext_factors_list accordingly
     ifelse item i ext_change_list = "decreasing"
       [ifelse item i ext_rate_list = "gradual"
-        [set ext_factors_list replace-item i ext_factors_list (x - 1)]
+        [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 1))]
         [ifelse item i ext_rate_list = "medium"
-          [set ext_factors_list replace-item i ext_factors_list (x - 2)]
-          [set ext_factors_list replace-item i ext_factors_list (x - random 5)] ; temporary
+          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 2))]
+          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - random 5))] ; temporary
         ]
     ]
       [if item i ext_change_list = "increasing"
         [ifelse item i ext_rate_list = "gradual"
-          [set ext_factors_list replace-item i ext_factors_list (x + 1)]
+          [set ext_factors_list replace-item i ext_factors_list min (list 10000 (x + 1))]
           [ifelse item i ext_rate_list = "medium"
-           [set ext_factors_list replace-item i ext_factors_list (x + 2)]
-           [set ext_factors_list replace-item i ext_factors_list (x + random 5)] ; temporary
+           [set ext_factors_list replace-item i ext_factors_list min (list 10000 (x + 2))]
+           [set ext_factors_list replace-item i ext_factors_list min (list 10000 (x + random 5))] ; temporary
           ]
         ]
       ]
@@ -1018,7 +1018,7 @@ CHOOSER
 trust_agri_change
 trust_agri_change
 "decreasing" "constant" "increasing"
-0
+1
 
 CHOOSER
 207
@@ -1068,7 +1068,7 @@ CHOOSER
 trust_gov_change
 trust_gov_change
 "decreasing" "constant" "increasing"
-0
+1
 
 CHOOSER
 346
@@ -1088,7 +1088,7 @@ CHOOSER
 know_dev_change
 know_dev_change
 "decreasing" "constant" "increasing"
-0
+2
 
 CHOOSER
 347
