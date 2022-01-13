@@ -681,7 +681,7 @@ to scenarios
 
 end
 
-to basevalues
+to basescenario
   set GDP 5000
   set rainfall 5000
   set water_demand 5000
@@ -894,7 +894,7 @@ rainfall
 rainfall
 1
 10000
-5000.0
+5001.0
 100
 1
 NIL
@@ -939,7 +939,7 @@ trust_agriculture
 trust_agriculture
 1
 10000
-5000.0
+3886.0
 100
 1
 NIL
@@ -1116,10 +1116,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-211
-47
-320
-80
+212
+44
+321
+77
 Base Values
 basevalues
 NIL
