@@ -53,16 +53,16 @@ globals[
   Avg_risk ; average risk perception of consumers
   Avg_benefit ; average benefit perception of consumers
 
-  consumers_total ; amount consumers
-  farmers_total ; amount farmers
-  optimistic_consumers ; amount
-  neutral_consumers ; amount
-  alarmed_consumers ; amount
-  conflicted_consumers ; amount
-  optimistic_farmers ; amount
-  neutral_farmers ; amount
-  alarmed_farmers ; amount
-  conflicted_farmers ; amount
+  ;consumers_total ; amount consumers
+  ;farmers_total ; amount farmers
+  ;optimistic_consumers ; amount
+  ;neutral_consumers ; amount
+  ;alarmed_consumers ; amount
+  ;conflicted_consumers ; amount
+  ;optimistic_farmers ; amount
+  ;neutral_farmers ; amount
+  ;alarmed_farmers ; amount
+  ;conflicted_farmers ; amount
 
   max_network_size ; number
   cluster_list
@@ -716,7 +716,7 @@ to changecluster
   ifelse risk < 35 and benefit > 45
     [set cluster "optimistic"]
     [ifelse risk < 45 and benefit < 45
-      [set cluster "disengaged"]
+      [set cluster "neutral"]
       [ifelse risk > 45 and benefit < 35
         [set cluster "alarmed"]
         [set cluster "conflicted"]
@@ -826,6 +826,59 @@ to customvalues
   set trust_government custom_trust_gov
   set knowledge_dev custom_know_dev
 end
+
+; Consumer reporters
+to-report average_risk_consumers
+  report mean [risk] of consumers
+end
+
+to-report average_benefit_consumers
+  report mean [benefit] of consumers
+end
+
+
+
+to-report optimistic_consumers
+  report count consumers with [cluster = "optimistic"]
+end
+
+to-report conflicted_consumers
+  report count consumers with [cluster = "conflicted"]
+end
+
+to-report neutral_consumers
+  report count consumers with [cluster = "neutral"]
+end
+
+to-report alarmed_consumers
+  report count consumers with [cluster = "alarmed"]
+end
+
+
+; Farmer reporters
+to-report average_risk_farmers
+  report mean [risk] of farmers
+end
+
+to-report average_benefit_farmers
+  report mean [benefit] of farmers
+end
+
+to-report optimistic_farmers
+  report count farmers with [cluster = "optimistic"]
+end
+
+to-report conflicted_farmers
+  report count farmers with [cluster = "conflicted"]
+end
+
+to-report neutral_farmers
+  report count farmers with [cluster = "neutral"]
+end
+
+to-report alarmed_farmers
+  report count farmers with [cluster = "alarmed"]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 647
@@ -873,9 +926,9 @@ NIL
 
 BUTTON
 101
-46
+45
 176
-79
+78
 go once
 go
 NIL
@@ -987,7 +1040,7 @@ SWITCH
 520
 debug?
 debug?
-0
+1
 1
 -1000
 
@@ -1015,7 +1068,7 @@ GDP
 GDP
 1
 10
-5000.0
+10.0
 1
 1
 NIL
@@ -1045,7 +1098,7 @@ water_demand
 water_demand
 1
 10
-5000.0
+10.0
 1
 1
 NIL
@@ -1060,7 +1113,7 @@ regulations
 regulations
 1
 10
-5000.0
+10.0
 1
 1
 NIL
@@ -1075,7 +1128,7 @@ trust_agriculture
 trust_agriculture
 1
 10
-5000.0
+10.0
 1
 1
 NIL
@@ -1245,7 +1298,7 @@ knowledge_dev
 knowledge_dev
 1
 10
-5000.0
+10.0
 1
 1
 NIL
@@ -1361,6 +1414,92 @@ NIL
 NIL
 NIL
 1
+
+MONITOR
+1189
+14
+1332
+59
+Average risk of consumers
+average_risk_consumers
+2
+1
+11
+
+MONITOR
+1331
+14
+1495
+59
+Average benefit of consumers
+average_benefit_consumers
+2
+1
+11
+
+MONITOR
+1189
+58
+1332
+103
+Average risk of farmers
+average_risk_farmers
+2
+1
+11
+
+MONITOR
+1331
+58
+1495
+103
+Average benefit of farmers
+average_benefit_farmers
+2
+1
+11
+
+PLOT
+1189
+104
+1633
+310
+Consumer clusters
+Weeks
+Number
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Optimistic consumers" 1.0 0 -10899396 true "" "plotxy ticks optimistic_consumers"
+"Conflicted consumers" 1.0 0 -955883 true "" "plotxy ticks conflicted_consumers"
+"Neutral consumers" 1.0 0 -16777216 true "" "plotxy ticks neutral_consumers"
+"Alarmed consumers" 1.0 0 -2674135 true "" "plotxy ticks alarmed_consumers"
+
+PLOT
+1189
+310
+1634
+516
+Farmer clusters
+Weeks
+Number
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Optimistic farmers" 1.0 0 -10899396 true "" "plotxy ticks optimistic_farmers"
+"Conflicted farmers" 1.0 0 -955883 true "" "plotxy ticks conflicted_farmers"
+"Neutral farmer" 1.0 0 -16777216 true "" "plotxy ticks neutral_farmers"
+"Alarmed farmers" 1.0 0 -2674135 true "" "plotxy ticks alarmed_farmers"
 
 @#$#@#$#@
 ## WHAT IS IT?
