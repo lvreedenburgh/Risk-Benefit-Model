@@ -3,15 +3,10 @@ breed [farmers farmer]
 
 turtles-own [
   clustered?
-  in_network?
+  ;in_network?
   leader?
   in_conversation?
   influence
-
-  optimistic_%
-  neutral_%
-  alarmed_%
-  conflicted_%
 
   ; calculate the weight the agent gives to external factor
   weight_knowledge_dev
@@ -75,6 +70,21 @@ globals[
   ext_factors_list
   ext_change_list
   ext_rate_list
+
+  optimistic_%_farmer
+  neutral_%_farmer
+  alarmed_%_farmer
+  conflicted_%_farmer
+
+  optimistic_%_consumer
+  neutral_%_consumer
+  alarmed_%_consumer
+  conflicted_%_consumer
+
+  optimistic_%
+  neutral_%
+  alarmed_%
+  conflicted_%
 ]
 
 to setup
@@ -108,21 +118,22 @@ end
 
 to setupconsumers
 
+  set optimistic_%_consumer 0.252
+  set neutral_%_consumer 0.396
+  set alarmed_%_consumer 0.118
+  set conflicted_%_consumer 0.234
+
   create-consumers No_consumers [
     set color white
     set shape "person"
     set size 3
     set network []
     set influence 1
-    set optimistic_% 0.252
-    set neutral_% 0.396
-    set alarmed_% 0.118
-    set conflicted_% 0.234
     assign-weights
   ]
 
   set agentset consumers
-  ask consumers [assigntoclusters]
+  assigntoclusters
 
   ask consumers [set leader? false]
   ask n-of (consumer_leaders * No_consumers) consumers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
@@ -141,23 +152,22 @@ end
 
 to setupfarmers
 
+  set optimistic_%_farmer 0.28
+  set neutral_%_farmer 0.648
+  set alarmed_%_farmer 0.022
+  set conflicted_%_farmer 0.05
+
   create-farmers No_farmers [
     set color yellow
     set shape "person"
     set size 3
     set network []
     set influence 1
-    set optimistic_% 0.28; not a turtle-own!
-    set neutral_% 0.648
-    set alarmed_% 0.022
-    set conflicted_% 0.05
     assign-weights
   ]
 
   set agentset farmers
-  ask farmers [
-    assigntoclusters
-  ]
+  assigntoclusters
 
   ask farmers [set leader? false]
   ask n-of (farmer_leaders * No_farmers) farmers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
@@ -176,16 +186,119 @@ to setupfarmers
 end
 
 to assigntoclusters
-  ;To DO: try to avoid setting percentage as a turtle-own variable
-  ; To Do: assigncluster is now called by all agents, so it is done too often, optimistic_% etc. are turtle own right now, so you can't call the procedure form without asking turtles
-  ; When I played around with it I changed the  optimistic_% etc. to globals there were some agents that did not get assigned to clusters. I don't know how this happened but don't want to mess around too much with parts that I haven't written
+
+  if agentset = consumers [
+    set optimistic_% optimistic_%_consumer
+    set neutral_% neutral_%_consumer
+    set alarmed_% alarmed_%_consumer
+    set conflicted_% conflicted_%_consumer
+  ]
+
+  if agentset = farmers [
+    set optimistic_% optimistic_%_farmer
+    set neutral_% neutral_%_farmer
+    set alarmed_% alarmed_%_farmer
+    set conflicted_% conflicted_%_farmer
+  ]
 
   ask agentset [set clustered? 0]
 
-  ask n-of (optimistic_% * count agentset) agentset with [clustered? = 0] [ set cluster "optimistic" set clustered? 1]
-  ask n-of (neutral_% * count agentset) agentset with [clustered? = 0] [ set cluster "neutral" set clustered? 1]
-  ask n-of (alarmed_% * count agentset) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
-  ask n-of (conflicted_% * count agentset) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
+
+  ask n-of (floor (optimistic_% * count agentset)) agentset with [clustered? = 0] [ set cluster "optimistic" set clustered? 1]
+  ask n-of (floor (neutral_% * count agentset)) agentset with [clustered? = 0] [ set cluster "neutral" set clustered? 1]
+  ask n-of (floor (alarmed_% * count agentset)) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
+  ask n-of (floor (conflicted_% * count agentset)) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
+
+
+
+  let optimistic_rest ((optimistic_% * count agentset) - floor (optimistic_% * count agentset))
+  let neutral_rest ((neutral_% * count agentset) - floor (neutral_% * count agentset))
+  let alarmed_rest ((alarmed_% * count agentset) - floor (alarmed_% * count agentset))
+  let conficted_rest ((conflicted_% * count agentset) - floor (conflicted_% * count agentset))
+
+;  if debug? [
+;    print optimistic_rest
+;    print neutral_rest
+;    print alarmed_rest
+;    print conficted_rest
+;  ]
+  let rest_list sort-by > (list optimistic_rest neutral_rest alarmed_rest conficted_rest)
+;  if debug? [show rest_list]
+
+; TO DO: check whether can be optimized and optimize
+  if any? agentset with [clustered? = 0][
+    ifelse first rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse first rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse first rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if first rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+
+  if any? agentset with [clustered? = 0][
+    ifelse item 2 rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse item 2 rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse item 2 rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if item 2 rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+
+  if any? agentset with [clustered? = 0][
+    ifelse item 3 rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse item 3 rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse item 3 rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if item 3 rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+  if any? agentset with [clustered? = 0][
+    ifelse item 4 rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse item 4 rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse item 4 rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if item 4 rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
 
   ask agentset with [cluster = "optimistic"] [set new_risk random-normal 24.3 7.1 set new_benefit random-normal 57.7 6.5 setRandB new_risk new_benefit]
   ask agentset with [cluster = "neutral"] [set new_risk random-normal 36.1 6.5 set new_benefit random-normal 39.1 7.0 setRandB new_risk new_benefit]
@@ -268,12 +381,11 @@ end
 
 
 to setupnetworks_leaders
-  ; To Do: I have noticed that some farmers have repeated farmers in their network
 
-  let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot take leaders to their network
+  let potential_members agentset with [leader? = false and network_size < max_network_size and link-with myself = nobody]; leaders cannot take leaders to their network
 
   while [network_size < Leader_network_size and any? potential_members] ;by that we ensure that each leader will ends up with the maximum network and thus cannot be taken in the network of normal agent in the next phase
-  [ print network_size
+  [ ;print network_size
     let potential_members_same_cluster potential_members with [leader? = false and network_size < max_network_size and cluster = [cluster] of self]
     let potential_members_different_cluster potential_members with [leader? = false and network_size < max_network_size and cluster != [cluster] of self]
     let new_member_same_cluster one-of other potential_members_same_cluster
@@ -300,20 +412,27 @@ to setupnetworks_leaders
       set network lput new_member_different_cluster network
       set network_size network_size + 1
     ]
-    set potential_members other potential_members with [leader? = false and network_size < max_network_size]
+    set potential_members other potential_members with [leader? = false and network_size < max_network_size and link-with myself = nobody]
   ]
 
 
-  if debug? [print network_size]
+  if debug? [
+    print self
+;    print network_size
+    print sort network
+  ]
+
 
 end
 
 to setupnetworks_rest
 
-  let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot be taken a sthey already created full networks
+  let potential_members agentset with [leader? = false and network_size < max_network_size and link-with myself = nobody]; leaders cannot be taken a sthey already created full networks
 
   while [network_size < max_network_size and any? potential_members]
     [
+      ;if debug? [print potential_members]
+
     let potential_members_same_cluster potential_members with [cluster = [cluster] of self]
     let potential_members_different_cluster potential_members with [cluster != [cluster] of self]
     let new_member_same_cluster one-of other potential_members_same_cluster
@@ -340,10 +459,16 @@ to setupnetworks_rest
       set network lput new_member_different_cluster network
       set network_size network_size + 1
     ]
-    set potential_members other potential_members with [leader? = false and network_size < max_network_size]
-      print potential_members
+    set potential_members other potential_members with [leader? = false and network_size < max_network_size and link-with myself = nobody]
+
+      if debug? [print network]
   ]
-  if debug? [print network_size]
+; if debug? [
+;    print self
+;    print network_size
+;    print sort network
+; ]
+
 
 end
 
@@ -530,20 +655,20 @@ end
 
 to conversation [person1 person2]
   ; calculate
-  if debug? [
-    print "person1"
-    print person1
-    print "risk of person1"
-    print [risk] of person1
-    print "benefit of person1"
-    print [benefit] of person1
-    print "person2"
-    print person2
-    print "risk of person2"
-    print [risk] of person2
-    print "benefit of person2"
-    print [benefit] of person2
-  ]
+;  if debug? [
+;    print "person1"
+;    print person1
+;    print "risk of person1"
+;    print [risk] of person1
+;    print "benefit of person1"
+;    print [benefit] of person1
+;    print "person2"
+;    print person2
+;    print "risk of person2"
+;    print [risk] of person2
+;    print "benefit of person2"
+;    print [benefit] of person2
+;  ]
 
   ; Calculate the risk level of the conversation
   let avg_conversation_risk ((([risk] of person1 * [influence] of person1) + ([risk] of person2 * [influence] of person2)) / ([influence] of person1 + [influence] of person2))
@@ -555,16 +680,16 @@ to conversation [person1 person2]
   let D sqrt abs(([risk] of person1 - [risk] of person2) ^ 2 + ([benefit] of person1 - [benefit] of person2) ^ 2)
   let F ([influence] of person1 + [influence] of person2) + 2 * (D / 98.994949) ; Dmax =98.994949 = sqrt abs((70-0) ^ 2 + (70-0) ^ 2)
 
-  if debug? [
-    print "D"
-    print D
-    print "F"
-    print F
-    print "avg conversation_risk"
-    print avg_conversation_risk
-    print "avg_conversation benefit"
-    print avg_conversation_benefit
-  ]
+;  if debug? [
+;    print "D"
+;    print D
+;    print "F"
+;    print F
+;    print "avg conversation_risk"
+;    print avg_conversation_risk
+;    print "avg_conversation benefit"
+;    print avg_conversation_benefit
+;  ]
 
   ask person1 [
    set new_risk ([risk] of person1 - (([risk] of person1 - avg_conversation_risk) / F))
@@ -583,10 +708,10 @@ end
 
 
 to changecluster
-  if debug? [
-    print "my old cluster is"
-    print cluster
-  ]
+;  if debug? [
+;    print "my old cluster is"
+;    print cluster
+;  ]
 
   ifelse risk < 35 and benefit > 45
     [set cluster "optimistic"]
@@ -598,10 +723,10 @@ to changecluster
       ]
     ]
 
-  if debug? [
-    print "my new cluster is"
-    print cluster
-  ]
+;  if debug? [
+;    print "my new cluster is"
+;    print cluster
+;  ]
 end
 
 to setRandB [temp_risk temp_benefit]
@@ -623,10 +748,10 @@ to setRandB [temp_risk temp_benefit]
       [set benefit 70]
       [set benefit 0]
     ]
-  if debug? [
-      print "new benefit"
-      print benefit
-    ]
+;  if debug? [
+;      print "new benefit"
+;      print benefit
+;    ]
 end
 
 to scenarios
@@ -640,10 +765,10 @@ to scenarios
   foreach ext_factors_list [
     [x] ->
 
-    if debug? [
-      print item i ext_factors_list
-      print x
-      print item i ext_change_list]
+;    if debug? [
+;      print item i ext_factors_list
+;      print x
+;      print item i ext_change_list]
 
     ; change the values of ext_factors_list accordingly
     ifelse item i ext_change_list = "decreasing"
@@ -656,10 +781,10 @@ to scenarios
     ]
       [if item i ext_change_list = "increasing"
         [ifelse item i ext_rate_list = "gradual"
-          [set ext_factors_list replace-item i ext_factors_list min (list 10000 (x + 1))]
+          [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + 1))]
           [ifelse item i ext_rate_list = "medium"
-           [set ext_factors_list replace-item i ext_factors_list (x + 2)]
-           [set ext_factors_list replace-item i ext_factors_list (x + random 5)] ; temporary
+           [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + 2))]
+           [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + random 5))] ; temporary
           ]
         ]
       ]
@@ -667,8 +792,8 @@ to scenarios
     set i i + 1
   ]
 
-  if debug? [
-      print ext_factors_list ]
+  ;if debug? [
+      ;print ext_factors_list ]
 
   ; update the actual external factors, looks a bit ugly, but works
   set GDP item 0 ext_factors_list
@@ -682,13 +807,13 @@ to scenarios
 end
 
 to basevalues
-  set GDP 5000
-  set rainfall 5000
-  set water_demand 5000
-  set regulations 5000
-  set trust_agriculture 5000
-  set trust_government 5000
-  set knowledge_dev 5000
+  set GDP 5
+  set rainfall 5
+  set water_demand 5
+  set regulations 5
+  set trust_agriculture 5
+  set trust_government 5
+  set knowledge_dev 5
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -823,7 +948,7 @@ No_consumers
 No_consumers
 4
 100
-100.0
+28.0
 4
 1
 NIL
@@ -838,7 +963,7 @@ No_farmers
 No_farmers
 4
 20
-20.0
+8.0
 4
 1
 NIL
@@ -851,7 +976,7 @@ SWITCH
 520
 debug?
 debug?
-1
+0
 1
 -1000
 
@@ -878,9 +1003,9 @@ SLIDER
 GDP
 GDP
 1
-10000
+10
 5000.0
-100
+1
 1
 NIL
 HORIZONTAL
@@ -893,9 +1018,9 @@ SLIDER
 rainfall
 rainfall
 1
-10000
-9136.0
-100
+10
+5000.0
+1
 1
 NIL
 HORIZONTAL
@@ -908,9 +1033,9 @@ SLIDER
 water_demand
 water_demand
 1
-10000
-905.0
-100
+10
+5000.0
+1
 1
 NIL
 HORIZONTAL
@@ -923,9 +1048,9 @@ SLIDER
 regulations
 regulations
 1
-10000
-2932.0
-100
+10
+5000.0
+1
 1
 NIL
 HORIZONTAL
@@ -938,9 +1063,9 @@ SLIDER
 trust_agriculture
 trust_agriculture
 1
-10000
+10
 5000.0
-100
+1
 1
 NIL
 HORIZONTAL
@@ -953,9 +1078,9 @@ SLIDER
 trust_government
 trust_government
 1
-10000
+10
 5000.0
-100
+1
 1
 NIL
 HORIZONTAL
@@ -968,7 +1093,7 @@ CHOOSER
 GDP_change
 GDP_change
 "decreasing" "constant" "increasing"
-1
+2
 
 CHOOSER
 345
@@ -988,7 +1113,7 @@ CHOOSER
 rainfall_change
 rainfall_change
 "decreasing" "constant" "increasing"
-2
+1
 
 CHOOSER
 346
@@ -998,7 +1123,7 @@ CHOOSER
 rainfall_change_r
 rainfall_change_r
 "gradual" "medium" "abrupt"
-1
+0
 
 CHOOSER
 208
@@ -1008,7 +1133,7 @@ CHOOSER
 regulations_change
 regulations_change
 "decreasing" "constant" "increasing"
-0
+2
 
 CHOOSER
 208
@@ -1018,7 +1143,7 @@ CHOOSER
 trust_agri_change
 trust_agri_change
 "decreasing" "constant" "increasing"
-1
+2
 
 CHOOSER
 207
@@ -1028,7 +1153,7 @@ CHOOSER
 w_demand_change
 w_demand_change
 "decreasing" "constant" "increasing"
-0
+2
 
 CHOOSER
 345
@@ -1038,7 +1163,7 @@ CHOOSER
 w_demand_change_r
 w_demand_change_r
 "gradual" "medium" "abrupt"
-2
+0
 
 CHOOSER
 346
@@ -1078,7 +1203,7 @@ CHOOSER
 trust_gov_change_r
 trust_gov_change_r
 "gradual" "medium" "abrupt"
-0
+2
 
 CHOOSER
 209
@@ -1108,9 +1233,9 @@ SLIDER
 knowledge_dev
 knowledge_dev
 1
-10000
-7068.0
-100
+10
+5000.0
+1
 1
 NIL
 HORIZONTAL
@@ -1474,7 +1599,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
