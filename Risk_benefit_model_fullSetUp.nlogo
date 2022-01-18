@@ -8,11 +8,6 @@ turtles-own [
   in_conversation?
   influence
 
-  optimistic_%
-  neutral_%
-  alarmed_%
-  conflicted_%
-
   ; calculate the weight the agent gives to external factor
   weight_knowledge_dev
   weight_trust_government
@@ -75,6 +70,21 @@ globals[
   ext_factors_list
   ext_change_list
   ext_rate_list
+
+  optimistic_%_farmer
+  neutral_%_farmer
+  alarmed_%_farmer
+  conflicted_%_farmer
+
+  optimistic_%_consumer
+  neutral_%_consumer
+  alarmed_%_consumer
+  conflicted_%_consumer
+
+  optimistic_%
+  neutral_%
+  alarmed_%
+  conflicted_%
 ]
 
 to setup
@@ -108,21 +118,22 @@ end
 
 to setupconsumers
 
+  set optimistic_%_consumer 0.252
+  set neutral_%_consumer 0.396
+  set alarmed_%_consumer 0.118
+  set conflicted_%_consumer 0.234
+
   create-consumers No_consumers [
     set color white
     set shape "person"
     set size 3
     set network []
     set influence 1
-    set optimistic_% 0.252
-    set neutral_% 0.396
-    set alarmed_% 0.118
-    set conflicted_% 0.234
     assign-weights
   ]
 
   set agentset consumers
-  ask consumers [assigntoclusters]
+  assigntoclusters
 
   ask consumers [set leader? false]
   ask n-of (consumer_leaders * No_consumers) consumers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
@@ -141,23 +152,22 @@ end
 
 to setupfarmers
 
+  set optimistic_%_farmer 0.28
+  set neutral_%_farmer 0.648
+  set alarmed_%_farmer 0.022
+  set conflicted_%_farmer 0.05
+
   create-farmers No_farmers [
     set color yellow
     set shape "person"
     set size 3
     set network []
     set influence 1
-    set optimistic_% 0.28; not a turtle-own!
-    set neutral_% 0.648
-    set alarmed_% 0.022
-    set conflicted_% 0.05
     assign-weights
   ]
 
   set agentset farmers
-  ask farmers [
-    assigntoclusters
-  ]
+  assigntoclusters
 
   ask farmers [set leader? false]
   ask n-of (farmer_leaders * No_farmers) farmers with [leader? = false] [set leader? true set size 5 set influence leader_influence]
@@ -176,16 +186,119 @@ to setupfarmers
 end
 
 to assigntoclusters
-  ;To DO: try to avoid setting percentage as a turtle-own variable
-  ; To Do: assigncluster is now called by all agents, so it is done too often, optimistic_% etc. are turtle own right now, so you can't call the procedure form without asking turtles
-  ; When I played around with it I changed the  optimistic_% etc. to globals there were some agents that did not get assigned to clusters. I don't know how this happened but don't want to mess around too much with parts that I haven't written
+
+  if agentset = consumers [
+    set optimistic_% optimistic_%_consumer
+    set neutral_% neutral_%_consumer
+    set alarmed_% alarmed_%_consumer
+    set conflicted_% conflicted_%_consumer
+  ]
+
+  if agentset = farmers [
+    set optimistic_% optimistic_%_farmer
+    set neutral_% neutral_%_farmer
+    set alarmed_% alarmed_%_farmer
+    set conflicted_% conflicted_%_farmer
+  ]
 
   ask agentset [set clustered? 0]
 
-  ask n-of (optimistic_% * count agentset) agentset with [clustered? = 0] [ set cluster "optimistic" set clustered? 1]
-  ask n-of (neutral_% * count agentset) agentset with [clustered? = 0] [ set cluster "neutral" set clustered? 1]
-  ask n-of (alarmed_% * count agentset) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
-  ask n-of (conflicted_% * count agentset) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
+
+  ask n-of (floor (optimistic_% * count agentset)) agentset with [clustered? = 0] [ set cluster "optimistic" set clustered? 1]
+  ask n-of (floor (neutral_% * count agentset)) agentset with [clustered? = 0] [ set cluster "neutral" set clustered? 1]
+  ask n-of (floor (alarmed_% * count agentset)) agentset with [clustered? = 0] [ set cluster "alarmed" set clustered? 1]
+  ask n-of (floor (conflicted_% * count agentset)) agentset with [clustered? = 0] [ set cluster "conflicted" set clustered? 1]
+
+
+
+  let optimistic_rest ((optimistic_% * count agentset) - floor (optimistic_% * count agentset))
+  let neutral_rest ((neutral_% * count agentset) - floor (neutral_% * count agentset))
+  let alarmed_rest ((alarmed_% * count agentset) - floor (alarmed_% * count agentset))
+  let conficted_rest ((conflicted_% * count agentset) - floor (conflicted_% * count agentset))
+
+  if debug? [
+    print optimistic_rest
+    print neutral_rest
+    print alarmed_rest
+    print conficted_rest
+  ]
+  let rest_list sort-by > (list optimistic_rest neutral_rest alarmed_rest conficted_rest)
+  if debug? [show rest_list]
+
+; TO DO: check whether can be optimized and optimize
+  if any? agentset with [clustered? = 0][
+    ifelse first rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse first rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse first rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if first rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+
+  if any? agentset with [clustered? = 0][
+    ifelse item 2 rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse item 2 rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse item 2 rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if item 2 rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+
+  if any? agentset with [clustered? = 0][
+    ifelse item 3 rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse item 3 rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse item 3 rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if item 3 rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+  if any? agentset with [clustered? = 0][
+    ifelse item 4 rest_list = optimistic_rest [
+      ask one-of agentset with [clustered? = 0] [set cluster "optimistic" set clustered? 1]
+    ][
+      ifelse item 4 rest_list = neutral_rest[
+        ask one-of agentset with [clustered? = 0] [set cluster "neutral" set clustered? 1]
+      ][
+        ifelse item 4 rest_list = alarmed_rest[
+          ask one-of agentset with [clustered? = 0] [set cluster "alarmed" set clustered? 1]
+        ][
+          if item 4 rest_list = conficted_rest[
+            ask one-of agentset with [clustered? = 0] [set cluster "conflicted" set clustered? 1]
+          ]
+        ]
+      ]
+    ]
+  ]
 
   ask agentset with [cluster = "optimistic"] [set new_risk random-normal 24.3 7.1 set new_benefit random-normal 57.7 6.5 setRandB new_risk new_benefit]
   ask agentset with [cluster = "neutral"] [set new_risk random-normal 36.1 6.5 set new_benefit random-normal 39.1 7.0 setRandB new_risk new_benefit]
@@ -273,7 +386,7 @@ to setupnetworks_leaders
   let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot take leaders to their network
 
   while [network_size < Leader_network_size and any? potential_members] ;by that we ensure that each leader will ends up with the maximum network and thus cannot be taken in the network of normal agent in the next phase
-  [ print network_size
+  [ ;print network_size
     let potential_members_same_cluster potential_members with [leader? = false and network_size < max_network_size and cluster = [cluster] of self]
     let potential_members_different_cluster potential_members with [leader? = false and network_size < max_network_size and cluster != [cluster] of self]
     let new_member_same_cluster one-of other potential_members_same_cluster
@@ -341,7 +454,7 @@ to setupnetworks_rest
       set network_size network_size + 1
     ]
     set potential_members other potential_members with [leader? = false and network_size < max_network_size]
-      print potential_members
+      ;print potential_members
   ]
   if debug? [print network_size]
 
@@ -823,7 +936,7 @@ No_consumers
 No_consumers
 4
 100
-100.0
+4.0
 4
 1
 NIL
@@ -838,7 +951,7 @@ No_farmers
 No_farmers
 4
 20
-20.0
+4.0
 4
 1
 NIL
@@ -879,7 +992,7 @@ GDP
 GDP
 1
 10000
-5000.0
+5401.0
 100
 1
 NIL
@@ -894,7 +1007,7 @@ rainfall
 rainfall
 1
 10000
-5000.0
+5301.0
 100
 1
 NIL
@@ -909,7 +1022,7 @@ water_demand
 water_demand
 1
 10000
-5000.0
+4973.0
 100
 1
 NIL
@@ -924,7 +1037,7 @@ regulations
 regulations
 1
 10000
-5000.0
+4973.0
 100
 1
 NIL
@@ -939,7 +1052,7 @@ trust_agriculture
 trust_agriculture
 1
 10000
-5000.0
+4973.0
 100
 1
 NIL
@@ -954,7 +1067,7 @@ trust_government
 trust_government
 1
 10000
-5000.0
+4973.0
 100
 1
 NIL
@@ -968,7 +1081,7 @@ CHOOSER
 GDP_change
 GDP_change
 "decreasing" "constant" "increasing"
-1
+0
 
 CHOOSER
 345
@@ -988,7 +1101,7 @@ CHOOSER
 rainfall_change
 rainfall_change
 "decreasing" "constant" "increasing"
-2
+0
 
 CHOOSER
 346
@@ -998,7 +1111,7 @@ CHOOSER
 rainfall_change_r
 rainfall_change_r
 "gradual" "medium" "abrupt"
-1
+0
 
 CHOOSER
 208
@@ -1018,7 +1131,7 @@ CHOOSER
 trust_agri_change
 trust_agri_change
 "decreasing" "constant" "increasing"
-1
+0
 
 CHOOSER
 207
@@ -1038,7 +1151,7 @@ CHOOSER
 w_demand_change_r
 w_demand_change_r
 "gradual" "medium" "abrupt"
-2
+0
 
 CHOOSER
 346
@@ -1068,7 +1181,7 @@ CHOOSER
 trust_gov_change
 trust_gov_change
 "decreasing" "constant" "increasing"
-1
+0
 
 CHOOSER
 346
@@ -1078,7 +1191,7 @@ CHOOSER
 trust_gov_change_r
 trust_gov_change_r
 "gradual" "medium" "abrupt"
-0
+2
 
 CHOOSER
 209
@@ -1088,7 +1201,7 @@ CHOOSER
 know_dev_change
 know_dev_change
 "decreasing" "constant" "increasing"
-2
+0
 
 CHOOSER
 347
@@ -1109,7 +1222,7 @@ knowledge_dev
 knowledge_dev
 1
 10000
-5000.0
+4501.0
 100
 1
 NIL
@@ -1474,7 +1587,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
