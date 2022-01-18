@@ -85,6 +85,8 @@ globals[
   neutral_%
   alarmed_%
   conflicted_%
+
+  TIME
 ]
 
 to setup
@@ -478,8 +480,8 @@ to go
   consumers-risk-benefit
   farmers-risk-benefit
   scenarios
-
   tick
+  set TIME ticks
 end
 
 to consumers-risk-benefit
