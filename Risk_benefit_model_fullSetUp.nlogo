@@ -815,6 +815,17 @@ to basevalues
   set trust_government 5
   set knowledge_dev 5
 end
+
+
+to customvalues
+  set GDP custom_GDP
+  set rainfall custom_rainfall
+  set water_demand custom_w_demand
+  set regulations custom_regulations
+  set trust_agriculture custom_trust_agri
+  set trust_government custom_trust_gov
+  set knowledge_dev custom_know_dev
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 647
@@ -1257,6 +1268,100 @@ NIL
 NIL
 1
 
+INPUTBOX
+483
+96
+638
+156
+custom_GDP
+400.0
+1
+0
+Number
+
+INPUTBOX
+483
+156
+638
+216
+custom_rainfall
+4000.0
+1
+0
+Number
+
+INPUTBOX
+483
+215
+638
+275
+custom_w_demand
+6000.0
+1
+0
+Number
+
+INPUTBOX
+484
+275
+639
+335
+custom_regulations
+5000.0
+1
+0
+Number
+
+INPUTBOX
+485
+336
+640
+396
+custom_trust_agri
+4000.0
+1
+0
+Number
+
+INPUTBOX
+485
+397
+640
+457
+custom_trust_gov
+4321.0
+1
+0
+Number
+
+INPUTBOX
+486
+458
+641
+518
+custom_know_dev
+1234.0
+1
+0
+Number
+
+BUTTON
+348
+47
+460
+80
+Custom Values
+customvalues
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -1599,7 +1704,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.2
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
