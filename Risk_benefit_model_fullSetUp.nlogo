@@ -997,7 +997,7 @@ SLIDER
 735
 leader_influence
 leader_influence
-0
+1
 10
 10.0
 1
@@ -1085,7 +1085,7 @@ rainfall
 rainfall
 1
 10
-5000.0
+5.0
 1
 1
 NIL
@@ -1145,7 +1145,7 @@ trust_government
 trust_government
 1
 10
-5000.0
+5.0
 1
 1
 NIL
