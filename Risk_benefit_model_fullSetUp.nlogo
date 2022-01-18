@@ -3,7 +3,7 @@ breed [farmers farmer]
 
 turtles-own [
   clustered?
-  in_network?
+  ;in_network?
   leader?
   in_conversation?
   influence
@@ -381,9 +381,8 @@ end
 
 
 to setupnetworks_leaders
-  ; To Do: I have noticed that some farmers have repeated farmers in their network
 
-  let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot take leaders to their network
+  let potential_members agentset with [leader? = false and network_size < max_network_size and link-with myself = nobody]; leaders cannot take leaders to their network
 
   while [network_size < Leader_network_size and any? potential_members] ;by that we ensure that each leader will ends up with the maximum network and thus cannot be taken in the network of normal agent in the next phase
   [ ;print network_size
@@ -413,20 +412,27 @@ to setupnetworks_leaders
       set network lput new_member_different_cluster network
       set network_size network_size + 1
     ]
-    set potential_members other potential_members with [leader? = false and network_size < max_network_size]
+    set potential_members other potential_members with [leader? = false and network_size < max_network_size and link-with myself = nobody]
   ]
 
 
-  if debug? [print network_size]
+  if debug? [
+    print self
+    print network_size
+    print sort network
+  ]
+
 
 end
 
 to setupnetworks_rest
 
-  let potential_members agentset with [leader? = false and network_size < max_network_size]; leaders cannot be taken a sthey already created full networks
+  let potential_members agentset with [leader? = false and network_size < max_network_size and link-with myself = nobody]; leaders cannot be taken a sthey already created full networks
 
   while [network_size < max_network_size and any? potential_members]
     [
+      ;if debug? [print potential_members]
+
     let potential_members_same_cluster potential_members with [cluster = [cluster] of self]
     let potential_members_different_cluster potential_members with [cluster != [cluster] of self]
     let new_member_same_cluster one-of other potential_members_same_cluster
@@ -453,10 +459,16 @@ to setupnetworks_rest
       set network lput new_member_different_cluster network
       set network_size network_size + 1
     ]
-    set potential_members other potential_members with [leader? = false and network_size < max_network_size]
-      ;print potential_members
+    set potential_members other potential_members with [leader? = false and network_size < max_network_size and link-with myself = nobody]
+
+      ;if debug? [print network]
   ]
-  if debug? [print network_size]
+ if debug? [
+    print self
+    print network_size
+    print sort network
+ ]
+
 
 end
 
@@ -936,7 +948,7 @@ No_consumers
 No_consumers
 4
 100
-4.0
+28.0
 4
 1
 NIL
@@ -964,7 +976,7 @@ SWITCH
 520
 debug?
 debug?
-1
+0
 1
 -1000
 
@@ -1007,7 +1019,7 @@ rainfall
 rainfall
 1
 10000
-5301.0
+5000.0
 100
 1
 NIL
@@ -1022,7 +1034,7 @@ water_demand
 water_demand
 1
 10000
-4973.0
+5000.0
 100
 1
 NIL
@@ -1037,7 +1049,7 @@ regulations
 regulations
 1
 10000
-4973.0
+5000.0
 100
 1
 NIL
@@ -1052,7 +1064,7 @@ trust_agriculture
 trust_agriculture
 1
 10000
-4973.0
+5000.0
 100
 1
 NIL
@@ -1067,7 +1079,7 @@ trust_government
 trust_government
 1
 10000
-4973.0
+5000.0
 100
 1
 NIL
@@ -1101,7 +1113,7 @@ CHOOSER
 rainfall_change
 rainfall_change
 "decreasing" "constant" "increasing"
-0
+1
 
 CHOOSER
 346
@@ -1181,7 +1193,7 @@ CHOOSER
 trust_gov_change
 trust_gov_change
 "decreasing" "constant" "increasing"
-0
+1
 
 CHOOSER
 346
@@ -1222,7 +1234,7 @@ knowledge_dev
 knowledge_dev
 1
 10000
-4501.0
+5000.0
 100
 1
 NIL
