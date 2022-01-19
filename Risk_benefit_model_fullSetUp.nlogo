@@ -768,25 +768,26 @@ to scenarios
     [x] ->
 
 ;    if debug? [
-;      print item i ext_factors_list
 ;      print x
-;      print item i ext_change_list]
+;      print item i ext_change_list
+;      print item i ext_rate_list
+;    ]
 
     ; change the values of ext_factors_list accordingly
     ifelse item i ext_change_list = "decreasing"
       [ifelse item i ext_rate_list = "gradual"
-        [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 1))]
+        [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 0.001))]
         [ifelse item i ext_rate_list = "medium"
-          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 2))]
-          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - random 5))] ; temporary
+          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - 0.002))]
+          [set ext_factors_list replace-item i ext_factors_list max (list 0 (x - random-float 0.005))] ; temporary
         ]
     ]
       [if item i ext_change_list = "increasing"
         [ifelse item i ext_rate_list = "gradual"
-          [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + 1))]
+          [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + 0.001))]
           [ifelse item i ext_rate_list = "medium"
-           [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + 2))]
-           [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + random 5))] ; temporary
+           [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + 0.002))]
+           [set ext_factors_list replace-item i ext_factors_list min (list 10 (x + random-float 0.005))] ; temporary
           ]
         ]
       ]
@@ -794,8 +795,8 @@ to scenarios
     set i i + 1
   ]
 
-  ;if debug? [
-      ;print ext_factors_list ]
+;  if debug? [
+;      print ext_factors_list ]
 
   ; update the actual external factors, looks a bit ugly, but works
   set GDP item 0 ext_factors_list
@@ -999,7 +1000,7 @@ leader_influence
 leader_influence
 1
 10
-10.0
+1.0
 1
 1
 NIL
@@ -1085,7 +1086,7 @@ rainfall
 rainfall
 1
 10
-5.0
+2.895999999999788
 1
 1
 NIL
@@ -1100,7 +1101,7 @@ water_demand
 water_demand
 1
 10
-10.0
+9.208000000000073
 1
 1
 NIL
@@ -1145,7 +1146,7 @@ trust_government
 trust_government
 1
 10
-5.0
+10.0
 1
 1
 NIL
@@ -1169,7 +1170,7 @@ CHOOSER
 GDP_change_r
 GDP_change_r
 "gradual" "medium" "abrupt"
-0
+2
 
 CHOOSER
 208
@@ -1179,7 +1180,7 @@ CHOOSER
 rainfall_change
 rainfall_change
 "decreasing" "constant" "increasing"
-1
+0
 
 CHOOSER
 346
@@ -1229,7 +1230,7 @@ CHOOSER
 w_demand_change_r
 w_demand_change_r
 "gradual" "medium" "abrupt"
-0
+1
 
 CHOOSER
 346
@@ -1239,7 +1240,7 @@ CHOOSER
 regulations_change_r
 regulations_change_r
 "gradual" "medium" "abrupt"
-0
+2
 
 CHOOSER
 346
@@ -1249,7 +1250,7 @@ CHOOSER
 trust_agri_change_r
 trust_agri_change_r
 "gradual" "medium" "abrupt"
-0
+2
 
 CHOOSER
 208
@@ -1259,7 +1260,7 @@ CHOOSER
 trust_gov_change
 trust_gov_change
 "decreasing" "constant" "increasing"
-1
+2
 
 CHOOSER
 346
@@ -1289,7 +1290,7 @@ CHOOSER
 know_dev_change_r
 know_dev_change_r
 "gradual" "medium" "abrupt"
-0
+2
 
 SLIDER
 37
@@ -1329,7 +1330,7 @@ INPUTBOX
 638
 156
 custom_GDP
-400.0
+10.0
 1
 0
 Number
@@ -1340,7 +1341,7 @@ INPUTBOX
 638
 216
 custom_rainfall
-4000.0
+10.0
 1
 0
 Number
@@ -1351,7 +1352,7 @@ INPUTBOX
 638
 275
 custom_w_demand
-6000.0
+10.0
 1
 0
 Number
@@ -1362,7 +1363,7 @@ INPUTBOX
 639
 335
 custom_regulations
-5000.0
+10.0
 1
 0
 Number
@@ -1373,7 +1374,7 @@ INPUTBOX
 640
 396
 custom_trust_agri
-4000.0
+10.0
 1
 0
 Number
@@ -1384,7 +1385,7 @@ INPUTBOX
 640
 457
 custom_trust_gov
-4321.0
+10.0
 1
 0
 Number
@@ -1395,7 +1396,7 @@ INPUTBOX
 641
 518
 custom_know_dev
-1234.0
+10.0
 1
 0
 Number
