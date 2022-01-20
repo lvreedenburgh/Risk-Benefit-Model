@@ -617,10 +617,10 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
   [set risk (risk - weight_trust_government * trust_government)]
   [set risk (risk + weight_trust_government * trust_government)]
 
-;; high perceived control = low risk (vice versa)
+;; high perceived control = low risk (vice versa) (Favorably or negative regulations?)
   ifelse weight_regulations < 1 ; perceived control in the paper
-  [set risk (risk + weight_regulations * regulations)]
-  [set risk (risk - weight_regulations * regulations) ]
+  [set risk (risk + weight_regulations * regulations) set benefit (benefit - weight_regulations * regulations) ]
+  [set risk (risk - weight_regulations * regulations) set benefit (benefit + weight_regulations * regulations)]
 
 ;; If there is a high water demand, there is a higher benefit and lower perceived risk (the benefit is assumed)
 ;; If there is a low water demand, there is a higer perceived risk and lower benefit (the benefit is assumed)
@@ -638,8 +638,10 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 
 ;; if there is a high confidence rainfall will be enough, there is a lower perceived risk
     ifelse weight_rainfall > 1 ; drought experience in the paper
-    [set risk (risk - weight_rainfall * rainfall)]
-    [set risk (risk + weight_rainfall * rainfall)]
+    [set risk (risk - weight_rainfall * rainfall) set benefit (benefit - weight_rainfall * rainfall)]
+    [set risk (risk + weight_rainfall * rainfall) set benefit (benefit + weight_rainfall * rainfall)]
+
+
 
   ]
 
@@ -1015,7 +1017,7 @@ No_consumers
 No_consumers
 4
 100
-28.0
+100.0
 4
 1
 NIL
@@ -1030,7 +1032,7 @@ No_farmers
 No_farmers
 4
 20
-8.0
+20.0
 4
 1
 NIL
@@ -1071,7 +1073,7 @@ GDP
 GDP
 1
 10
-10.0
+2.0
 1
 1
 NIL
@@ -1086,7 +1088,7 @@ rainfall
 rainfall
 1
 10
-2.895999999999788
+10.0
 1
 1
 NIL
@@ -1101,7 +1103,7 @@ water_demand
 water_demand
 1
 10
-9.208000000000073
+1.0
 1
 1
 NIL
@@ -1116,7 +1118,7 @@ regulations
 regulations
 1
 10
-10.0
+1.0
 1
 1
 NIL
@@ -1131,7 +1133,7 @@ trust_agriculture
 trust_agriculture
 1
 10
-10.0
+1.0
 1
 1
 NIL
@@ -1146,7 +1148,7 @@ trust_government
 trust_government
 1
 10
-10.0
+1.0
 1
 1
 NIL
@@ -1160,7 +1162,7 @@ CHOOSER
 GDP_change
 GDP_change
 "decreasing" "constant" "increasing"
-2
+1
 
 CHOOSER
 345
@@ -1180,7 +1182,7 @@ CHOOSER
 rainfall_change
 rainfall_change
 "decreasing" "constant" "increasing"
-0
+1
 
 CHOOSER
 346
@@ -1200,7 +1202,7 @@ CHOOSER
 regulations_change
 regulations_change
 "decreasing" "constant" "increasing"
-2
+1
 
 CHOOSER
 208
@@ -1210,7 +1212,7 @@ CHOOSER
 trust_agri_change
 trust_agri_change
 "decreasing" "constant" "increasing"
-2
+1
 
 CHOOSER
 207
@@ -1220,7 +1222,7 @@ CHOOSER
 w_demand_change
 w_demand_change
 "decreasing" "constant" "increasing"
-2
+1
 
 CHOOSER
 345
@@ -1260,7 +1262,7 @@ CHOOSER
 trust_gov_change
 trust_gov_change
 "decreasing" "constant" "increasing"
-2
+1
 
 CHOOSER
 346
@@ -1280,7 +1282,7 @@ CHOOSER
 know_dev_change
 know_dev_change
 "decreasing" "constant" "increasing"
-2
+1
 
 CHOOSER
 347
@@ -1301,7 +1303,7 @@ knowledge_dev
 knowledge_dev
 1
 10
-10.0
+1.0
 1
 1
 NIL
