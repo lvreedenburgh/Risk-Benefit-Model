@@ -91,17 +91,27 @@ globals[
   frequency_talk_farmers
 
   run-seed
+
+  ;GDP
+  ;rainfall
+  ;water_demand
+  ;regulations
+  ;trust_agriculture
+  ;trust_government
+  ;knowledge_dev
 ]
 
 to setup
   clear-all
   reset-ticks
+  if debug?[
+    set run-seed new-seed ; get a random seed to use for our run
+    print run-seed
+    random-seed run-seed
+    ; do the rest of our normal setup
+  ]
 
-  set run-seed new-seed ; get a random seed to use for our run
-  print run-seed
-  random-seed run-seed
-  ; do the rest of our normal setup
-
+  basevalues
   set max_network_size 6 ; network does not include agent themselves, so they have 6 agents in their network max
   set cluster_list ["optimistic" "neutral" "alarmed" "conflicted"]
   set frequency_talk_consumers 0
@@ -499,12 +509,17 @@ end
 
 to go
 
-  ask turtles [set in_conversation? false]
-  consumers-risk-benefit
-  farmers-risk-benefit
-  scenarios
-  tick
-  set TIME ticks
+  ifelse TIME < 1560 ;assumption: a year have 52 weeks, simulation stops at the endof year 30
+  [
+    ask turtles [set in_conversation? false]
+    consumers-risk-benefit
+    farmers-risk-benefit
+    scenarios
+    tick
+    set TIME ticks
+  ][
+    stop
+  ]
 end
 
 to consumers-risk-benefit
@@ -646,12 +661,12 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 
   ; Reinforcing your own beliefs
   ifelse cluster = "optimistic"
-    [set risk (risk - random-float 0.1) set benefit (benefit + random-float 0.05)]
+    [set risk (risk - random-float 0.05) set benefit (benefit + random-float 0.05)]
     [ifelse cluster = "neutral"
-      [set risk (risk - random-float 0.1) set benefit (benefit - random-float 0.05)]
+      [set risk (risk - random-float 0.05) set benefit (benefit - random-float 0.05)]
       [ifelse cluster = "alarmed"
-        [set risk (risk + random-float 0.1) set benefit (benefit - random-float 0.05)]
-        [set risk (risk + random-float 0.1) set benefit (benefit + random-float 0.05)]
+        [set risk (risk + random-float 0.05) set benefit (benefit - random-float 0.05)]
+        [set risk (risk + random-float 0.05) set benefit (benefit + random-float 0.05)]
     ]
   ]
 
@@ -683,8 +698,8 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 
 ;; high perceived control = low risk (vice versa) (Favorably or negative regulations?)
 
-  set risk (risk + (- weight_regulations) * regulations)
-  set benefit (benefit + (weight_regulations) * regulations)
+  set risk (risk + (- weight_regulations) * regulations * 1.5)
+  set benefit (benefit + (weight_regulations) * regulations * 1.5)
 
   if debug? [
     print "regulations"
@@ -705,7 +720,7 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
     print benefit]
 
 
-    set risk (risk + (- weight_GDP) * GDP)
+    set risk (risk + (- weight_GDP) * GDP * 1.5)
 
     if debug? [
     print "GDP"
@@ -715,8 +730,8 @@ to change-R-and-B ; change the risk and benefit for the consumer or farmer
 
 ;; if there is a high confidence rainfall will be enough, there is a lower perceived risk
 
-    set risk (risk + (- weight_rainfall) * rainfall)
-    set benefit (benefit + (- weight_rainfall) * rainfall)
+    set risk (risk + (- weight_rainfall) * rainfall * 1.5)
+    set benefit (benefit + (- weight_rainfall) * rainfall * 1.5)
 
     if debug? [
     print "rainfall"
@@ -917,15 +932,15 @@ to basevalues
 end
 
 
-to customvalues
-  set GDP custom_GDP
-  set rainfall custom_rainfall
-  set water_demand custom_w_demand
-  set regulations custom_regulations
-  set trust_agriculture custom_trust_agri
-  set trust_government custom_trust_gov
-  set knowledge_dev custom_know_dev
-end
+;to customvalues
+;  set GDP custom_GDP
+;  set rainfall custom_rainfall
+;  set water_demand custom_w_demand
+;  set regulations custom_regulations
+;  set trust_agriculture custom_trust_agri
+;  set trust_government custom_trust_gov
+;  set knowledge_dev custom_know_dev
+;end
 
 ; Consumer reporters
 to-report average_risk_consumers
@@ -1153,367 +1168,151 @@ Leader_network_size
 Leader_network_size
 6
 12
-12.0
+9.0
 1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-36
-96
-208
-129
-GDP
-GDP
--1
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-36
-142
-208
-175
-rainfall
-rainfall
--1
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-36
-185
-208
-218
-water_demand
-water_demand
--1
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-36
-230
-208
-263
-regulations
-regulations
--1
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-36
-275
-208
-308
-trust_agriculture
-trust_agriculture
--1
-1
--0.1734999999999972
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-37
-317
-209
-350
-trust_government
-trust_government
--1
-1
-0.0
-0.1
 1
 NIL
 HORIZONTAL
 
 CHOOSER
-208
-96
-346
-141
+175
+93
+313
+138
 GDP_change
 GDP_change
 "decreasing" "constant" "increasing"
 1
 
 CHOOSER
-345
-96
-483
-141
+313
+93
+460
+138
 GDP_change_r
 GDP_change_r
+"gradual" "medium" "abrupt"
+0
+
+CHOOSER
+175
+138
+313
+183
+rainfall_change
+rainfall_change
+"decreasing" "constant" "increasing"
+1
+
+CHOOSER
+313
+139
+460
+184
+rainfall_change_r
+rainfall_change_r
 "gradual" "medium" "abrupt"
 2
 
 CHOOSER
-208
-141
-346
-186
-rainfall_change
-rainfall_change
-"decreasing" "constant" "increasing"
-1
-
-CHOOSER
-346
-141
-485
-186
-rainfall_change_r
-rainfall_change_r
-"gradual" "medium" "abrupt"
-0
-
-CHOOSER
-208
-230
-346
-275
+176
+231
+314
+276
 regulations_change
 regulations_change
 "decreasing" "constant" "increasing"
 1
 
 CHOOSER
-208
-274
-346
-319
+176
+277
+314
+322
 trust_agri_change
 trust_agri_change
-"decreasing" "constant" "increasing"
-0
-
-CHOOSER
-207
-186
-345
-231
-w_demand_change
-w_demand_change
 "decreasing" "constant" "increasing"
 1
 
 CHOOSER
-345
-186
-488
-231
-w_demand_change_r
-w_demand_change_r
-"gradual" "medium" "abrupt"
-0
-
-CHOOSER
-346
+176
+185
+314
 230
-490
-275
+w_demand_change
+w_demand_change
+"decreasing" "constant" "increasing"
+1
+
+CHOOSER
+314
+185
+459
+230
+w_demand_change_r
+w_demand_change_r
+"gradual" "medium" "abrupt"
+0
+
+CHOOSER
+314
+231
+459
+276
 regulations_change_r
 regulations_change_r
 "gradual" "medium" "abrupt"
 0
 
 CHOOSER
-346
-274
-484
-319
+314
+277
+459
+322
 trust_agri_change_r
 trust_agri_change_r
 "gradual" "medium" "abrupt"
-0
+2
 
 CHOOSER
-208
-318
-346
-363
+175
+323
+313
+368
 trust_gov_change
 trust_gov_change
 "decreasing" "constant" "increasing"
 1
 
 CHOOSER
-346
-319
-484
-364
-trust_gov_change_r
-trust_gov_change_r
-"gradual" "medium" "abrupt"
-0
-
-CHOOSER
-209
-363
-347
-408
-know_dev_change
-know_dev_change
-"decreasing" "constant" "increasing"
-1
-
-CHOOSER
-347
-363
-487
-408
-know_dev_change_r
-know_dev_change_r
-"gradual" "medium" "abrupt"
-0
-
-SLIDER
-37
-361
-209
-394
-knowledge_dev
-knowledge_dev
--1
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-211
-47
-320
-80
-Base Values
-basevalues
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-INPUTBOX
-483
-96
-638
-156
-custom_GDP
-10.0
-1
-0
-Number
-
-INPUTBOX
-483
-156
-638
-216
-custom_rainfall
-10.0
-1
-0
-Number
-
-INPUTBOX
-483
-215
-638
-275
-custom_w_demand
-10.0
-1
-0
-Number
-
-INPUTBOX
-484
-275
-639
-335
-custom_regulations
-10.0
-1
-0
-Number
-
-INPUTBOX
-485
-336
-640
-396
-custom_trust_agri
-10.0
-1
-0
-Number
-
-INPUTBOX
-485
-397
-640
-457
-custom_trust_gov
-10.0
-1
-0
-Number
-
-INPUTBOX
-486
+313
+323
 458
-641
-518
-custom_know_dev
-10.0
-1
-0
-Number
+368
+trust_gov_change_r
+trust_gov_change_r
+"gradual" "medium" "abrupt"
+2
 
-BUTTON
-348
-47
-460
-80
-Custom Values
-customvalues
-NIL
+CHOOSER
+175
+369
+313
+414
+know_dev_change
+know_dev_change
+"decreasing" "constant" "increasing"
 1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
+
+CHOOSER
+313
+369
+458
+414
+know_dev_change_r
+know_dev_change_r
+"gradual" "medium" "abrupt"
+2
 
 MONITOR
 1189
@@ -1600,6 +1399,188 @@ PENS
 "Conflicted farmers" 1.0 0 -955883 true "" "plotxy ticks conflicted_farmers"
 "Neutral farmer" 1.0 0 -16777216 true "" "plotxy ticks neutral_farmers"
 "Alarmed farmers" 1.0 0 -2674135 true "" "plotxy ticks alarmed_farmers"
+
+MONITOR
+26
+93
+175
+138
+GDP
+GDP
+5
+1
+11
+
+MONITOR
+26
+139
+175
+184
+Rainfall
+Rainfall
+5
+1
+11
+
+MONITOR
+26
+185
+176
+230
+Water Demand
+water_demand
+5
+1
+11
+
+MONITOR
+26
+231
+176
+276
+Regulations
+regulations
+5
+1
+11
+
+MONITOR
+26
+277
+176
+322
+Trust in agriculture
+trust_agriculture
+5
+1
+11
+
+MONITOR
+26
+323
+175
+368
+Trust in Government
+trust_government
+5
+1
+11
+
+MONITOR
+26
+369
+175
+414
+Knowledge Development
+knowledge_dev
+5
+1
+11
+
+SLIDER
+459
+98
+631
+131
+GDP
+GDP
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+459
+144
+631
+177
+rainfall
+rainfall
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+458
+191
+630
+224
+water_demand
+water_demand
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+459
+238
+631
+271
+regulations
+regulations
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+459
+282
+631
+315
+trust_agriculture
+trust_agriculture
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+458
+330
+630
+363
+trust_government
+trust_government
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+457
+375
+629
+408
+knowledge_dev
+knowledge_dev
+-1
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1943,7 +1924,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
