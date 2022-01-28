@@ -1632,21 +1632,22 @@ For the analysis of this model EMA_workbench library for Python was used. This i
 ## RELATED MODELS
 This model was inspired by:
 
+Kandiah, V. K., Berglund, E. Z., & Binder, A. R. (2019). An agent-based modeling approach to project adoption of water reuse and evaluate expansion plans within a sociotechnical water infrastructure system. Sustainable Cities and Society, 46, 101412.
+
 Kraan, O., Dalderop, S., Kramer, G. J., & Nikolic, I. (2019). Jumping to a better world: An agent-based exploration of criticality in low-carbon energy transitions. Energy Research & Social Science, 47, 156-165.
 
-Kandiah, V. K., Berglund, E. Z., & Binder, A. R. (2019). An agent-based modeling approach to project adoption of water reuse and evaluate expansion plans within a sociotechnical water infrastructure system. Sustainable Cities and Society, 46, 101412.
 
 ## CREDITS AND REFERENCES
 Distribution for weights derived from:
+
+Duinen, R. V., Filatova, T., Geurts, P., & Veen, A. V. D. (2015). Empirical analysis of farmers' drought risk perception: Objective factors, personal circumstances, and social influence. Risk analysis, 35(4), 741-755.
 
 Lazaridou, D., Michailidis, A., & Trigkas, M. (2018). Farmers’ Attitudes Toward Recycled Water Use in Irrigated Agriculture. KnE Social Sciences, 157-165.
 
 Michetti, M., Raggi, M., Guerra, E., & Viaggi, D. (2019). Interpreting farmers’ perceptions of risks and benefits concerning wastewater reuse for irrigation: a case study in Emilia-Romagna (Italy). Water, 11(1), 108.
 
-Empirical Analysis of Farmers' Drought Risk Perception: Objective Factors, Personal Circumstances, and Social Influence
 
 Nancarrow, B. E., Leviston, Z., Po, M., Porter, N. B., & Tucker, D. I. (2008). What drives communities' decisions and behaviours in the reuse of wastewater. Water Science and Technology, 57(4), 485-491.
-
 @#$#@#$#@
 default
 true
